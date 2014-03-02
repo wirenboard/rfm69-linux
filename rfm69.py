@@ -105,6 +105,7 @@ class RFM69(object):
 
 	  rssi = -self.readReg(REG_RSSIVALUE)
 	  rssi >>= 1
+	  print "rssi: ", rssi
 	  return rssi
 
 	def interruptHandler(self, x):
@@ -226,6 +227,23 @@ class RFM69(object):
 		else:
 			self.writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | self._powerLevel)#; //enable P0 only
 
+	def setCarrier(self, freq):
+		frf = int(freq / (32./2**19))
+		frf_msb = frf >> 16
+		frf_mid = (frf >> 8) & 0x00ff
+		frf_lsb = frf & 0x00ff
+
+		print hex(frf_msb)
+		print hex(frf_mid)
+		print hex(frf_lsb)
+
+		self.writeReg( REG_FRFMSB, frf_msb)
+		self.writeReg( REG_FRFMID, frf_mid)
+		self.writeReg( REG_FRFLSB, frf_lsb)
+
+		self.carrier = freq
+
+
 
 	def config(self):
 		self.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY )
@@ -233,20 +251,23 @@ class RFM69(object):
 
 		self.writeReg( REG_FDEVMSB, RF_FDEVMSB_5000) #default:5khz, (FDEV + BitRate/2 <= 500Khz)
 		self.writeReg( REG_FDEVLSB, RF_FDEVLSB_5000)
-		self.writeReg( REG_FRFMSB, 0x6c)
-		self.writeReg( REG_FRFMID, 0x7a)
-		self.writeReg( REG_FRFLSB, 0xe1)
-		self.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_111 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 ) #(BitRate < 2 * RxBw)
+
+		self.setCarrier(433.92)
+
+		self.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_001 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 ) #(BitRate < 2 * RxBw)
 		self.writeReg( REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_01 ) #DIO0 is the only IRQ we're using
 		self.writeReg( REG_DIOMAPPING2, RF_DIOMAPPING2_DIO5_01 | RF_DIOMAPPING2_DIO4_10)
-		self.writeReg( REG_RSSITHRESH, 140 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
-		#~ self.writeReg( REG_RSSITHRESH, 220 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+		#~ self.writeReg( REG_RSSITHRESH, 200 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+		self.writeReg( REG_RSSITHRESH, 240 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+
 
 
 		self.writeReg( REG_PREAMBLELSB, 5 ) # default 3 preamble bytes 0xAAAAAA
-		self.writeReg( REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_SIZE_1 | RF_SYNC_TOL_7 )
+		#~ self.writeReg( REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_SIZE_1 | RF_SYNC_TOL_7 )
+		self.writeReg( REG_SYNCCONFIG, RF_SYNC_ON | RF_SYNC_SIZE_2 | RF_SYNC_TOL_5 )
 
-		self.writeReg( REG_SYNCVALUE1, 0xaa )      #attempt to make this compatible with sync1 byte of RFM12B lib
+		self.writeReg( REG_SYNCVALUE1, 0xaa )
+		self.writeReg( REG_SYNCVALUE2, 0x66 )
 
 		#~  0x2f  self.writeReg( REG_SYNCVALUE1, 0xaa )      #attempt to make this compatible with sync1 byte of RFM12B lib
 		#~  0x2f  self.writeReg( REG_SYNCVALUE2, 0xaa )

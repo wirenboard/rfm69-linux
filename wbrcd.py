@@ -6,6 +6,7 @@ import Queue
 
 from collections import deque
 from weakref import WeakValueDictionary
+import binascii
 
 import rfm69
 
@@ -30,6 +31,7 @@ class ThreadedTCPRequestHandler(SocketServer.StreamRequestHandler):
         del client_handlers[client_id]
 
 class ThreadedTCPServer(SocketServer.ThreadingMixIn, SocketServer.TCPServer):
+    allow_reuse_address = True
     pass
 
 def client(ip, port, message):
@@ -46,22 +48,70 @@ def client(ip, port, message):
 def feed_clients():
     while True:
         line = clients_send_queue.get()
-
+        print "Feed clients with ", line
         for handler in client_handlers.values():
             handler.wfile.write(line)
+            handler.wfile.write("\n")
             handler.wfile.flush()
-
-def radio_send():
-    while True:
-        line = radio_send_queue.get()
-        print "got line", line
-
-        clients_send_queue.put("blah===" + line)
 
 
 radio = None
 
+from protocols import RawProtocolHandler
+from noolite import NooliteProtocolHandler
+from oregon import OregonV2ProtocolHandler
+
+protocol_handlers = [RawProtocolHandler(), NooliteProtocolHandler(), OregonV2ProtocolHandler()]
+
+
+
+def radio_send():
+    while True:
+        line = radio_send_queue.get()
+        #~ print "got line", line
+
+        parts = line.split()
+        protocol_name = parts[0]
+
+        kw = {}
+        for part in parts[1:]:
+            k, v = part.split('=', 1)
+            kw[k] = v
+
+        for protocol_handler in protocol_handlers:
+            if protocol_handler.name == protocol_name:
+                data = protocol_handler.tryEncode(kw)
+                if data:
+                    radio.send(data)
+                    radio.receiveBegin()
+
+
+
+
+
+
+
+def process_recv_radio_data(data, counter):
+    time_str = str(time.time())
+    for protocol in protocol_handlers:
+        #~ print protocol
+        decoded = protocol.tryDecode(data)
+        if decoded:
+            kw = decoded
+
+            data_arr = [ str(counter), time_str, str(protocol.name)]
+
+            for key, value in kw.iteritems():
+                data_arr.append("%s=%s" % (key, value))
+
+            clients_send_queue.put("\t".join(data_arr))
+
+
+
+
+
 if __name__ == "__main__":
+
     # Port 0 means to select an arbitrary unused port
     HOST, PORT = "localhost", 58149
 
@@ -95,13 +145,23 @@ if __name__ == "__main__":
     radio.setHighPower(False)
     radio.receiveBegin()
 
+
+
+    counter = 0
     while 1:
         data = radio.getDataBlocking()
         if not data:
             time.sleep(0.1)
             continue
 
-        print "got data", data
+        #~ print "got data", data
+
+        counter += 1
+        process_recv_radio_data(data, counter)
+
+
+
+
 
 
 
