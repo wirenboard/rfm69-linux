@@ -1,3 +1,4 @@
+import sys
 import time
 import socket
 import threading
@@ -114,6 +115,7 @@ if __name__ == "__main__":
 
     # Port 0 means to select an arbitrary unused port
     HOST, PORT = "localhost", 58149
+    #~ HOST, PORT = "localhost", 0
 
     server = ThreadedTCPServer((HOST, PORT), ThreadedTCPRequestHandler)
     server.daemon_threads = True
@@ -137,11 +139,19 @@ if __name__ == "__main__":
     radio_sender_thread.start()
 
 
-    radio = rfm69.RFM69()
+    if len(sys.argv) > 2:
+        spi_minor = int(sys.argv[1])
+        irq_gpio = int(sys.argv[2])
+        # 7 55
+    else:
+        spi_minor = 5
+        irq_gpio = 36
+
+    radio = rfm69.RFM69(spi_minor=spi_minor,irq_gpio=irq_gpio)
     radio.start()
 
-
-#~ radio.setHighPower(True)
+    radio.setPowerLevel(31)
+    #~ radio.setHighPower(True)
     radio.setHighPower(False)
     radio.receiveBegin()
 
