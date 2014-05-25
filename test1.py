@@ -1,11 +1,20 @@
-
+import sys
 import time
 
 from registers import *
 import rfm69
 
 
-radio = rfm69.RFM69()
+if len(sys.argv) > 2:
+	spi_minor = int(sys.argv[1])
+	irq_gpio = int(sys.argv[2])
+	# 7 55
+else:
+	spi_minor = 5
+	irq_gpio = 36
+
+radio = rfm69.RFM69(spi_minor=spi_minor,irq_gpio=irq_gpio)
+
 radio.start()
 
 
@@ -13,6 +22,7 @@ radio.start()
 radio.setHighPower(False)
 radio.receiveBegin()
 
+sys.exit(0)
 #~
 #~ while 1:
 	#~ data = radio.receiveDone()
