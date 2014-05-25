@@ -72,11 +72,14 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         return self.addr
 
 
-    def calcChecksum(self, flip_bit, cmd, addr, arg):
+    def calcChecksum(self, flip_bit, cmd, addr, fmt = 0,  args=[]):
         addr_hi = addr >> 8
         addr_lo = addr & 0x00ff
 
-        data = chr(((cmd << 1) | flip_bit) << 3)  +  chr(addr_lo) + chr(addr_hi) +chr(arg)
+        data = chr(((cmd << 1) | flip_bit) << 3)
+        if fmt == 1:
+            data += chr(args[0])
+        data+=  chr(addr_lo) + chr(addr_hi) +chr(fmt)
         return crc8_maxim(data)
 
     def parsePacket(self, packet):
@@ -89,11 +92,11 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         addr_hi = int(packet[14:22][::-1], 2)
         addr = (addr_hi << 8)  + addr_lo
 
-        arg = int(packet[22:30][::-1], 2)
+        fmt = int(packet[22:30][::-1], 2)
 
         crc = int(packet[30:38][::-1], 2)
 
-        return flip_bit, cmd, addr, arg, crc
+        return flip_bit, cmd, addr, fmt, crc
 
     def tryDecode(self, data):
         bitstream = utils.get_bits(data)
@@ -102,6 +105,9 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         bitstream = utils.strip_tail(bitstream, ignore_bits=4)
 
         #~ print bitstream, len(bitstream)
+        if '000' in bitstream[2:]:
+                print utils.manchester_decode(bitstream[2:][:bitstream[2:].index('000')])
+
 
         if len(bitstream) not in (156, 157, 327, 315):
             return
@@ -112,8 +118,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         packet = utils.manchester_decode(first_copy)
         if len(packet) != 38:
             return
-        flip_bit, cmd, addr, arg, crc = self.parsePacket(packet)
-        crc_expected = self.calcChecksum(flip_bit, cmd, addr, arg)
+        flip_bit, cmd, addr, fmt, crc = self.parsePacket(packet)
+        crc_expected = self.calcChecksum(flip_bit, cmd, addr, fmt)
 
         if crc != crc_expected:
             return
@@ -125,7 +131,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         kw = {}
         kw['flip'] = str(flip_bit)
         kw['cmd'] = str(cmd)
-        kw['arg'] = hex(arg)[2:]
+        kw['fmt'] = hex(fmt)[2:]
         kw['addr'] = hex(addr)[2:]
         kw['raw'] = raw
         #~ kw['crc'] = hex(crc)[2:]
@@ -148,30 +154,42 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             else:
                 addr = self.addr
 
-            if 'arg' in kw:
-                arg = int(kw['arg'], 16)
-            else:
-                arg = 0
+            fmt = 0
+            args = []
 
             cmd = int(kw['cmd'])
+
+            if cmd == 6:
+                fmt = 1
+                args = [ int(kw['arg']) ]
 
             if 'crc' in kw:
                 crc = int(kw['crc'])
             else:
-                crc = self.calcChecksum(self.flip, cmd, addr, arg)
+                crc = self.calcChecksum(self.flip, cmd, addr, fmt, args)
 
             addr_hi = addr >> 8
             addr_lo = addr & 0x00ff
 
+            args_data = ''
+            if fmt == 1:
+                args_data = bin(args[0])[2:].zfill(8)[::-1]
+            elif fmt == 4:
+                args_data = bin(args[0])[2:].zfill(4)[::-1],
+            elif fmt == 3:
+                assert len(args) == 4
+                args_data = "".join(bin(args[i])[2:].zfill(9)[::-1] for i in xrange(4))
+
             packet = "".join(( '1',
                                 str(self.flip),
                                 bin(cmd)[2:].zfill(4)[::-1],
+                                args_data,
                                 bin(addr_lo)[2:].zfill(8)[::-1],
                                 bin(addr_hi)[2:].zfill(8)[::-1],
-                                bin(arg)[2:].zfill(8)[::-1],
+                                bin(fmt)[2:].zfill(8)[::-1],
                                 bin(crc)[2:].zfill(8)[::-1] ))
 
-        print "packet: ", packet
+        #~ print "packet: ", packet
 
 
 
@@ -188,3 +206,16 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         data = utils.get_bytes(bitstream)
         #~ print data
         return data
+
+#ch:2 r:1 g:1 b:1        110110 10000000 10000000 10000000 00000000 10011111 10100100 11000000 11001011  fmt=3
+#ch:2 r:1 g:1 b:2        100110 10000000 10000000 01000000 00000000 10011111 10100100 11000000 11101101  fmt=3
+#ch:2 r:255 g:255 b:255  110110 11111111 11111111 11111111 00000000 10011111 10100100 11000000 10110001  fmt=3
+#ch:14 r:1 g:1 b:2       110110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
+#ch:14 r:1 g:1 b:2       100110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 01100110  fmt=3
+#ch:15 r:1 g:1 b:2       110110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
+#ch:2 switch mode        110100                                1000 10011111 10100100 00100000 00010101  fmt=4
+#ch:2 switch mode        110100                                1000 10011111 10100100 00100000 00010101  fmt=4
+#ch:2 switch color       111000                                1000 10011111 10100100 00100000 00000100  fmt=4
+#ch:2 lvl=46             110110                            01110100 10011111 10100100 10000000 10010100  fmt=1
+#ch:2 cmd=10             110101                                     10011111 10100100 00000000 00010001  fmt=0
+#ch:2 off_ch             110000                                     10011111 10100100 00000000 10000100  fmt=0
