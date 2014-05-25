@@ -19,7 +19,7 @@ from threading import Event
 class RFM69(object):
 	#~ _powerLevel = 31
 	#~ _powerLevel = 60
-	_powerLevel = 32
+	_powerLevel = 31
 
 	def __init__(self, spi_major = 0, spi_minor = 5, spi_speed = 200000, irq_gpio = 36):
 		self._mode = None
@@ -70,15 +70,22 @@ class RFM69(object):
 
 			print "reg 0x%x = 0x%x = %s" % (regAddr, regVal, regVal)
 
+	def setHighPowerRegs(self, onOff):
+		self.writeReg(REG_TESTPA1, 0x5D if onOff  else  0x55)
+		self.writeReg(REG_TESTPA2, 0x7C if onOff else 0x70)
+
+
 	def setMode(self, newMode):
 		#~ if (newMode == _mode) return; //TODO: can remove this?
 
 		if newMode == RF69_MODE_TX:
 			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_TRANSMITTER)
-			#~ if (_isRFM69HW) setHighPowerRegs(true);
+			if self._isRFM69HW:
+				self.setHighPowerRegs(True)
 		elif newMode == RF69_MODE_RX:
 			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_RECEIVER);
-			#~ if (_isRFM69HW) setHighPowerRegs(false);
+			if self._isRFM69HW:
+				 self.setHighPowerRegs(False)
 		elif newMode == RF69_MODE_SYNTH:
 			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER)
 		elif newMode == RF69_MODE_STANDBY:
@@ -106,6 +113,10 @@ class RFM69(object):
 	  rssi = -self.readReg(REG_RSSIVALUE)
 	  rssi >>= 1
 	  print "rssi: ", rssi
+
+
+	  print "gain: " ,self.readReg(REG_LNA) & RF_LNA_CURRENTGAIN
+
 	  return rssi
 
 	def interruptHandler(self, x):
@@ -218,14 +229,21 @@ class RFM69(object):
 		GPIO.remove_event_detect(self.irq_gpio)
 
 	def setHighPower(self, onOff):
-		self._isRFM69HW = onOff;
-		#~ writeReg(REG_OCP, RF_OCP_OFF if _isRFM69HW else RF_OCP_ON)
-		self.writeReg(REG_OCP, RF_OCP_ON | RF_OCP_TRIM_50)
+		self._isRFM69HW = onOff
+		self.writeReg(REG_OCP, RF_OCP_OFF if self._isRFM69HW else RF_OCP_ON)
+		#~ self.writeReg(REG_OCP, RF_OCP_ON | RF_OCP_TRIM_50)
 		if (self._isRFM69HW):
 			# //turning ON
 			self.writeReg(REG_PALEVEL, (self.readReg(REG_PALEVEL) & 0x1F) | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON) # ; //enable P1 & P2 amplifier stages
 		else:
-			self.writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | self._powerLevel)#; //enable P0 only
+			#~ self.writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_OFF | RF_PALEVEL_PA2_OFF | self._powerLevel)#; //enable P0 only
+			self.writeReg(REG_PALEVEL, RF_PALEVEL_PA0_ON | RF_PALEVEL_PA1_ON | RF_PALEVEL_PA2_ON | self._powerLevel)#; //enable P0 only
+
+
+	def setPowerLevel(self, powerLevel):
+		self._powerLevel = powerLevel
+		self.writeReg(REG_PALEVEL, (self.readReg(REG_PALEVEL) & 0xE0) | (31 if self._powerLevel > 31 else  self._powerLevel))
+
 
 	def setCarrier(self, freq):
 		frf = int(freq / (32./2**19))
@@ -254,11 +272,17 @@ class RFM69(object):
 
 		self.setCarrier(433.92)
 
-		self.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_001 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 ) #(BitRate < 2 * RxBw)
+		#~ self.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_001 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 ) #(BitRate < 2 * RxBw)
+		self.writeReg( REG_RXBW, RF_RXBW_DCCFREQ_100 | RF_RXBW_MANT_16 | RF_RXBW_EXP_0 ) #(BitRate < 2 * RxBw)
+
+		#~ self.writeReg( REG_LNA, RF_LNA_GAINSELECT_MAXMINUS6)
+
+		self.writeReg( REG_OOKPEAK, RF_OOKPEAK_THRESHTYPE_PEAK)
+
 		self.writeReg( REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_01 ) #DIO0 is the only IRQ we're using
 		self.writeReg( REG_DIOMAPPING2, RF_DIOMAPPING2_DIO5_01 | RF_DIOMAPPING2_DIO4_10)
-		#~ self.writeReg( REG_RSSITHRESH, 200 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
-		self.writeReg( REG_RSSITHRESH, 240 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+		self.writeReg( REG_RSSITHRESH, 170 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+		#~ self.writeReg( REG_RSSITHRESH, 228 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
 
 
 
