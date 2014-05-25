@@ -1,10 +1,47 @@
 
 import time
-import WB_IO.GPIO as GPIO
+#~ import WB_IO.GPIO as _GPIO
+
+from gpio import GPIO
 import WB_IO.SPI as spidev
 
 from registers import *
 
+import threading
+#~ class _GPIOWrap(object):
+	#~ IN = _GPIO.IN
+	#~ OUT = _GPIO.OUT
+	#~ RISING = _GPIO.RISING
+	#~ RISING = _GPIO.RISING
+	#~ def __init__(self):
+		#~ self.lock = threading.Lock()
+	#~ def _proxy(self, method, *args, **kwargs):
+		#~ with self.lock:
+			#~ # print "proxy ", method, args, kwargs
+			#~ return getattr(_GPIO, method)(*args, **kwargs)
+#~
+	#~ def setup(self, *args, **kwargs):
+		#~ return self._proxy("setup", *args, **kwargs)
+	#~ def input(self, *args, **kwargs):
+		#~ return self._proxy("input", *args, **kwargs)
+#~
+	#~ def add_event_detect(self, *args, **kwargs):
+		#~ return self._proxy("add_event_detect", *args, **kwargs)
+	#~ def wait_for_edge(self, *args, **kwargs):
+		#~ return self._proxy("wait_for_edge", *args, **kwargs)
+	#~ def remove_event_detect(self, *args, **kwargs):
+		#~ return self._proxy("remove_event_detect", *args, **kwargs)
+
+
+class DummyLock(object):
+    def __init__(self):
+        pass
+    def __enter__(self):
+        print "enter"
+    def __exit__(self, type, value, traceback):
+        print "exit"
+
+#~ GPIO = _GPIOWrap()
 
 CSMA_LIMIT          = -90 # upper RX signal sensitivity threshold in dBm for carrier sense access
 RF69_MODE_SLEEP     =  0# XTAL OFF
@@ -36,6 +73,9 @@ class RFM69(object):
 
 		self.data_event = Event()
 
+		self.lock = threading.RLock()
+		#~ self.lock = DummyLock()
+
 	def setStandby(self):
 		self.setMode(RF69_MODE_STANDBY);
 		while ((self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
@@ -43,17 +83,18 @@ class RFM69(object):
 
 
 	def start(self):
-		while 1:
-			self.writeReg(REG_SYNCVALUE1, 0xaa)
-			val = self.readReg(REG_SYNCVALUE1)
-			if val == 0xaa:
-				break
+		with self.lock:
+			while 1:
+				self.writeReg(REG_SYNCVALUE1, 0xaa)
+				val = self.readReg(REG_SYNCVALUE1)
+				if val == 0xaa:
+					break
 
-		self.config()
-		self.setStandby()
-		print "ModeReady"
+			self.config()
+			self.setStandby()
+			print "ModeReady"
 
-		self.setInterruptHandler()
+			self.setInterruptHandler()
 
 
 	def readReg(self, addr):
@@ -76,66 +117,77 @@ class RFM69(object):
 
 
 	def setMode(self, newMode):
-		#~ if (newMode == _mode) return; //TODO: can remove this?
+		with self.lock:
+			#~ if (newMode == _mode) return; //TODO: can remove this?
 
-		if newMode == RF69_MODE_TX:
-			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_TRANSMITTER)
-			if self._isRFM69HW:
-				self.setHighPowerRegs(True)
-		elif newMode == RF69_MODE_RX:
-			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_RECEIVER);
-			if self._isRFM69HW:
-				 self.setHighPowerRegs(False)
-		elif newMode == RF69_MODE_SYNTH:
-			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER)
-		elif newMode == RF69_MODE_STANDBY:
-			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_STANDBY)
-		elif newMode == RF69_MODE_SLEEP:
-			self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP)
+			if newMode == RF69_MODE_TX:
+				self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_TRANSMITTER)
+				if self._isRFM69HW:
+					self.setHighPowerRegs(True)
+			elif newMode == RF69_MODE_RX:
+				self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_RECEIVER);
+				if self._isRFM69HW:
+					 self.setHighPowerRegs(False)
+			elif newMode == RF69_MODE_SYNTH:
+				self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SYNTHESIZER)
+			elif newMode == RF69_MODE_STANDBY:
+				self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_STANDBY)
+			elif newMode == RF69_MODE_SLEEP:
+				self.writeReg(REG_OPMODE, (self.readReg(REG_OPMODE) & 0xE3) | RF_OPMODE_SLEEP)
 
-		# // we are using packet mode, so this check is not really needed
-	  #// but waiting for mode ready is necessary when going from sleep because the FIFO may not be immediately available from previous mode
-		while ((self._mode == RF69_MODE_SLEEP) and (self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
-			pass  # // Wait for ModeReady
+			# // we are using packet mode, so this check is not really needed
+		  #// but waiting for mode ready is necessary when going from sleep because the FIFO may not be immediately available from previous mode
+			while ((self._mode == RF69_MODE_SLEEP) and (self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
+				pass  # // Wait for ModeReady
 
-		self._mode = newMode
+			self._mode = newMode
+		#~ except:
+			#~ import traceback; traceback.print_exc()
+			#~ raise
 
 
 	def readRSSI(self, forceTrigger=False):
-	  rssi = 0
-	  if (forceTrigger):
-		#RSSI trigger not needed if DAGC is in continuous mode
-	    self.writeReg(REG_RSSICONFIG, RF_RSSI_START)
-	    while ((self.readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00):
-			pass # Wait for RSSI_Ready
+		with self.lock:
+			rssi = 0
+			if (forceTrigger):
+				#RSSI trigger not needed if DAGC is in continuous mode
+				self.writeReg(REG_RSSICONFIG, RF_RSSI_START)
+				while ((self.readReg(REG_RSSICONFIG) & RF_RSSI_DONE) == 0x00):
+					pass # Wait for RSSI_Ready
 
 
-	  rssi = -self.readReg(REG_RSSIVALUE)
-	  rssi >>= 1
-	  print "rssi: ", rssi
+			rssi = -self.readReg(REG_RSSIVALUE)
+			rssi >>= 1
+			print "rssi: ", rssi
 
 
-	  print "gain: " ,self.readReg(REG_LNA) & RF_LNA_CURRENTGAIN
+			print "gain: " ,self.readReg(REG_LNA) & RF_LNA_CURRENTGAIN
 
-	  return rssi
+			return rssi
 
 	def interruptHandler(self, x):
-		if (self._mode == RF69_MODE_RX and (self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)):
-			self.setMode(RF69_MODE_STANDBY);
-			self._data = self.spi.write_then_read([REG_FIFO & 0x7f], self.payload_length);
-			self._datalen = self.payload_length;
-			self.__payloadlen = self.payload_length;
+			#~ return
+		#~ try:
+			print ("interrupt!");
+			if (self._mode == RF69_MODE_RX and (self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY)):
+				self.setMode(RF69_MODE_STANDBY);
+				self._data = self.spi.write_then_read([REG_FIFO & 0x7f], self.payload_length);
+				self._datalen = self.payload_length;
+				self.__payloadlen = self.payload_length;
 
-			self.data_event.set()
+				self.data_event.set()
 
-			self.setMode(RF69_MODE_RX)
+				self.setMode(RF69_MODE_RX)
 
-			#~ print self._data
+				#~ print self._data
 
 
-		self._rssi = self.readRSSI()
-		#~ print self._rssi
-		#~ print ("interrupt!");
+			self._rssi = self.readRSSI()
+			#~ print self._rssi
+		#~ except:
+			#~ import traceback
+			#~ traceback.print_exc()
+			#~ raise
 
 
 
@@ -150,15 +202,18 @@ class RFM69(object):
 		self.writeReg( REG_PAYLOADLENGTH, length ) #in variable length mode: the max frame size, not used in TX
 
 	def receiveBegin(self):
-		self.__payloadlen = 0
+		#~ print "receive begin"
+		with self.lock:
+			#~ print "receive begin inside lock"
+			self.__payloadlen = 0
 
 
-		RSSI = 0;
-		if (self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY):
-			self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART)#; // avoid RX deadlocks
-		self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01) # ; //set DIO0 to "PAYLOADREADY" in receive mode
-		self.setMode(RF69_MODE_RX);
-		self.setInterruptHandler()
+			RSSI = 0;
+			if (self.readReg(REG_IRQFLAGS2) & RF_IRQFLAGS2_PAYLOADREADY):
+				self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART)#; // avoid RX deadlocks
+			self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01) # ; //set DIO0 to "PAYLOADREADY" in receive mode
+			self.setMode(RF69_MODE_RX);
+			self.setInterruptHandler()
 
 
 	def getDataBlocking(self, timeout=None):
@@ -175,42 +230,45 @@ class RFM69(object):
 
 
 	def receiveDone(self):
-	  #~ noInterrupts(); //re-enabled in unselect() via setMode()
-		if (self._mode == RF69_MODE_RX and self.__payloadlen > 0):
-			self.setMode(RF69_MODE_STANDBY)
-			return self._data
+		with self.lock:
+		  #~ noInterrupts(); //re-enabled in unselect() via setMode()
+			if (self._mode == RF69_MODE_RX and self.__payloadlen > 0):
+				self.setMode(RF69_MODE_STANDBY)
+				return self._data
 
-		self.receiveBegin()
-		return None
+			self.receiveBegin()
+			return None
 
 
 	def send(self, payload):
-		self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART) #; // avoid RX deadlocks
-		while (not self.canSend()):
-			self.receiveDone()
+		with self.lock:
+			self.writeReg(REG_PACKETCONFIG2, (self.readReg(REG_PACKETCONFIG2) & 0xFB) | RF_PACKET2_RXRESTART) #; // avoid RX deadlocks
+			while (not self.canSend()):
+				self.receiveDone()
 
-		self.sendFrame(payload)
+			self.sendFrame(payload)
 
 	def sendFrame(self, payload):
-		self.unsetInterruptHandler()
+		with self.lock:
+			self.unsetInterruptHandler()
 
-		self.setMode(RF69_MODE_STANDBY)#; //turn off receiver to prevent reception while filling fifo
-		while ((self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
-			pass # // Wait for ModeReady
-		self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00) #; // DIO0 is "Packet Sent"
+			self.setMode(RF69_MODE_STANDBY)#; //turn off receiver to prevent reception while filling fifo
+			while ((self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
+				pass # // Wait for ModeReady
+			self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00) #; // DIO0 is "Packet Sent"
 
-		#~ bufferSize = len(payload)
-		self.spi.write_then_read([REG_FIFO | 0x80, len(payload)] + payload, 0);
-
-
-	#	/* no need to wait for transmit mode to be ready since its handled by the radio */
-		self.setMode(RF69_MODE_TX);
+			#~ bufferSize = len(payload)
+			self.spi.write_then_read([REG_FIFO | 0x80, len(payload)] + payload, 0);
 
 
-		GPIO.wait_for_edge(self.irq_gpio, GPIO.RISING)
-		print GPIO.input(self.irq_gpio)
+		#	/* no need to wait for transmit mode to be ready since its handled by the radio */
+			self.setMode(RF69_MODE_TX);
 
-		self.setStandby()
+
+			GPIO.wait_for_edge(self.irq_gpio, GPIO.RISING)
+			#~ print GPIO.input(self.irq_gpio)
+
+			self.setStandby()
 
 	def canSend(self):
 		return True
@@ -222,11 +280,15 @@ class RFM69(object):
 		return False
 
 	def setInterruptHandler(self):
-		self.unsetInterruptHandler()
-		GPIO.add_event_detect(self.irq_gpio, GPIO.RISING, callback=self.interruptHandler)
+		#~ return
+		with self.lock:
+			self.unsetInterruptHandler()
+			GPIO.add_event_detect(self.irq_gpio, GPIO.RISING, callback=self.interruptHandler)
 
 	def unsetInterruptHandler(self):
-		GPIO.remove_event_detect(self.irq_gpio)
+		#~ return
+		with self.lock:
+			GPIO.remove_event_detect(self.irq_gpio)
 
 	def setHighPower(self, onOff):
 		self._isRFM69HW = onOff
