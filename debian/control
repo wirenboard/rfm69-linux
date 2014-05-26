@@ -1,0 +1,11 @@
+Source: wb-homa-ism-radio
+Maintainer: Evgeny Boger <boger@contactless.ru>
+Section: misc
+Priority: optional
+Standards-Version: 3.9.2
+Build-Depends: debhelper (>= 9), pkg-config
+
+Package: wb-homa-ism-radio
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}, mosquitto, python-wb-io
+Description: MQTT driver for WB HomA for RFM69 ISM radio

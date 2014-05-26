@@ -1,0 +1,4 @@
+#!/bin/sh
+
+update-rc.d wb-homa-ism-radio defaults
+invoke-rc.d wb-homa-ism-radio start
