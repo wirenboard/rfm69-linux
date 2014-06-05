@@ -106,6 +106,8 @@ class MQTTHandler(object):
         self.client.on_message = self.on_mqtt_message
 
         self.client.publish("/devices/%s/meta/name" % self.mqtt_device_id, "ISM Radio", 0, True)
+        self.client.publish("/devices/%s/meta/room" % self.mqtt_device_id, "System", 0, True)
+
 
         for device in self.devices:
             self.client.publish("/devices/%s/meta/name" % device.device_id, device.device_name, 0, True)
