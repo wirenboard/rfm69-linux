@@ -85,7 +85,7 @@ from mqtt_devices import *
 class MQTTHandler(object):
     def __init__(self):
         self.client = None
-        self.mqtt_device_id = "wb-homa-rcd2"
+        self.mqtt_device_id = "wb-homa-rcd"
         self.counters = defaultdict(int)
 
         self.serial = get_serial()
