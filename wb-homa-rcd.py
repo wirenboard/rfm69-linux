@@ -13,6 +13,7 @@ import binascii
 import mosquitto
 
 import rfm69
+import random
 
 radio_send_queue = Queue.Queue()
 clients_send_queue = Queue.Queue()
@@ -91,14 +92,10 @@ class MQTTHandler(object):
         self.serial = get_serial()
         serial_parts = [int(x,16) for x in self.serial.split(':')[-2:]]
         serial_num = serial_parts[0]*16+ serial_parts[1]
-        noolite_start_addr = serial_num % 8192
+        self.noolite_start_addr = serial_num % 8192
 
-        self.noolite_device_number = 4
+        self.settings = {}
 
-        self.devices = []
-        for i in xrange(self.noolite_device_number):
-            addr = noolite_start_addr + i
-            self.devices.append(NooliteTxDevice(addr, radio_send))
 
     def start(self):
         self.client = mosquitto.Mosquitto(self.mqtt_device_id)
@@ -106,7 +103,41 @@ class MQTTHandler(object):
         self.client.on_message = self.on_mqtt_message
 
         self.client.publish("/devices/%s/meta/name" % self.mqtt_device_id, "ISM Radio", 0, True)
-        self.client.publish("/devices/%s/meta/room" % self.mqtt_device_id, "System", 0, True)
+
+        # subscribe to 'meta' settings
+        self.client.subscribe("/devices/%s/meta/+" % self.mqtt_device_id)
+
+
+        # hack to get retained settings first:
+        rand_str = str(time.time()) + str(random.randint(0,100000))
+        self.random_topic = "/tmp/%s/%s" % ( self.mqtt_device_id, rand_str)
+        self.client.subscribe(self.random_topic)
+        self.client.publish(self.random_topic, '1')
+
+
+        self.client.loop_start()
+
+    def on_config_received(self):
+        # check meta settings correctness and set default values
+        if not self.settings.get('room'):
+            self.settings['room'] = 'System'
+        try:
+            val = self.settings.get('noolite_remotes')
+            self.noolite_remotes = int(val)
+        except (TypeError, ValueError):
+            self.noolite_remotes = 4
+            self.settings['noolite_remotes'] = str(self.noolite_remotes)
+
+        # publish current settings
+        for name, value in self.settings.iteritems():
+            self.client.publish("/devices/%s/meta/%s" % (self.mqtt_device_id, name), value, 0, True)
+
+
+        self.devices = []
+        for i in xrange(self.noolite_remotes):
+            addr = self.noolite_start_addr + i
+            self.devices.append(NooliteTxDevice(addr, radio_send))
+
 
 
         for device in self.devices:
@@ -127,8 +158,6 @@ class MQTTHandler(object):
 
 
 
-
-        self.client.loop_start()
 
     def stop(self):
         self.mqtt_client.loop_stop()
@@ -153,13 +182,21 @@ class MQTTHandler(object):
     def on_mqtt_message(self, mosq, obj, msg):
         #~ print "on_mqtt_message " , msg.topic
         parts = msg.topic.split('/')
-        if mosquitto.topic_matches_sub('/devices/+/controls/+/on' , msg.topic):
+
+        if mosquitto.topic_matches_sub('/devices/%s/meta/+' % self.mqtt_device_id, msg.topic):
+            name = parts[4]
+            self.settings[name] = msg.payload
+        elif msg.topic == self.random_topic:
+            self.on_config_received()
+        elif mosquitto.topic_matches_sub('/devices/+/controls/+/on' , msg.topic):
+
             device_id = parts[2]
             control = parts[4]
 
             for device in self.devices:
                 if device.device_id == device_id:
                     ret = device.update_control(control, msg.payload)
+                    print "update control", control, payload
                     if ret is not None:
                         self.client.publish("/devices/%s/controls/%s" % (device_id, control), ret, 0, True)
 
