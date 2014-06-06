@@ -58,7 +58,7 @@ class RFM69(object):
 	#~ _powerLevel = 60
 	_powerLevel = 31
 
-	def __init__(self, spi_major = 0, spi_minor = 5, spi_speed = 200000, irq_gpio = 36):
+	def __init__(self, spi_major = 0, spi_minor = 5, spi_speed = 500000, irq_gpio = 36):
 		self._mode = None
 
 		self.__payloadlen = 0
@@ -74,6 +74,9 @@ class RFM69(object):
 		self.data_event = Event()
 
 		self.lock = threading.RLock()
+
+
+
 		#~ self.lock = DummyLock()
 
 	def setStandby(self):
@@ -158,12 +161,28 @@ class RFM69(object):
 
 			rssi = -self.readReg(REG_RSSIVALUE)
 			rssi >>= 1
-			print "rssi: ", rssi
+			#~ print "rssi: ", rssi
 
 
-			print "gain: " ,self.readReg(REG_LNA) & RF_LNA_CURRENTGAIN
+			#~ print "gain: " ,self.readReg(REG_LNA) & RF_LNA_CURRENTGAIN
 
 			return rssi
+
+
+	def is_noise(self, data):
+		rolling_counter = 0
+		for c in data:
+			if c == 0xFF:
+				rolling_counter = 0
+			else:
+				rolling_counter += 1
+
+			if rolling_counter >= 3:
+				return False
+
+		return True
+
+
 
 	def interruptHandler(self, x):
 			#~ return
@@ -175,7 +194,9 @@ class RFM69(object):
 				self._datalen = self.payload_length;
 				self.__payloadlen = self.payload_length;
 
-				self.data_event.set()
+
+				if not self.is_noise(self._data):
+						self.data_event.set()
 
 				self.setMode(RF69_MODE_RX)
 
@@ -254,6 +275,7 @@ class RFM69(object):
 
 			self.setMode(RF69_MODE_STANDBY)#; //turn off receiver to prevent reception while filling fifo
 			while ((self.readReg(REG_IRQFLAGS1) & RF_IRQFLAGS1_MODEREADY) == 0x00):
+				print "not ready"
 				pass # // Wait for ModeReady
 			self.writeReg(REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_00) #; // DIO0 is "Packet Sent"
 
