@@ -39,7 +39,9 @@ def radio_sender():
         data = radio_send_queue.get()
 
         try:
+            #~ print "actual send"
             radio.send(data)
+            #~ print "rec begin"
             radio.receiveBegin()
         except:
             import traceback;
