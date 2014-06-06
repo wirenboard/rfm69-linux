@@ -19,15 +19,10 @@ class NooliteTxDevice(object):
                                           'order' : '1',
                                         }
                             },
-                'on'    : { 'value' : 0,
-                            'meta': {  'type' : 'pushbutton',
+                'state'    : { 'value' : 0,
+                            'meta': {  'type' : 'switch',
                                        'order' : '2',
                                 },
-                          },
-                'off'   : { 'value' : 0,
-                            'meta': {  'type' : 'pushbutton' ,
-                                       'order' : '3',
-                                    },
                           },
                 'switch'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton' ,
@@ -70,10 +65,11 @@ class NooliteTxDevice(object):
             var['cmd'] = 15
         elif control == 'unbind':
             var['cmd'] = 9
-        elif control == 'on':
-            var['cmd'] = 2
-        elif control == 'off':
-            var['cmd'] = 0
+        elif control == 'state':
+            if int(value):
+                var['cmd'] = 2
+            else:
+                var['cmd'] = 0
         elif control == 'switch':
             var['cmd'] = 4
         elif control == 'level':
