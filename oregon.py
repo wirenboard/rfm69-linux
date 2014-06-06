@@ -29,7 +29,7 @@ class OregonV2ProtocolHandler(protocols.BaseRCProtocolHandler):
         while packet.startswith('1'):
             packet = packet[1:]
         #~ print packet
-        print len(packet)
+        #~ print len(packet)
         #~ print "AS"
         if len(packet) not in  (80, 81):
             return

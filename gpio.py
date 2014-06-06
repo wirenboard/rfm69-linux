@@ -88,7 +88,9 @@ class GPIOHandler(object):
         callback = lambda x: event.set()
 
         self.add_event_detect(gpio, edge, callback)
+        #~ print "wait for edge..."
         event.wait(1E100)
+        #~ print "wait for edge done"
         self.remove_event_detect(gpio)
 
 
