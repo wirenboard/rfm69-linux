@@ -196,7 +196,6 @@ class MQTTHandler(object):
             for device in self.devices:
                 if device.device_id == device_id:
                     ret = device.update_control(control, msg.payload)
-                    print "update control", control, payload
                     if ret is not None:
                         self.client.publish("/devices/%s/controls/%s" % (device_id, control), ret, 0, True)
 
