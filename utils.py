@@ -45,7 +45,8 @@ import sys
 def manchester_decode(pulseStream):
 	slips, data = manchester_decode_ext(pulseStream)
 	if slips:
-		print >>sys.stderr, ">>slips: ", ",".join(str(x) for x in slips)
+		pass
+		#~ print >>sys.stderr, ">>slips: ", ",".join(str(x) for x in slips)
 	return data
 
 
