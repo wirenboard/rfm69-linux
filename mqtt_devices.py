@@ -1,5 +1,8 @@
 from noolite import NooliteProtocolHandler
 
+
+
+
 class NooliteTxDevice(object):
     def __init__(self, addr, radio_send):
         self.addr = addr
@@ -91,5 +94,67 @@ class NooliteTxDevice(object):
 
 
 
+class OregonRxDevice(object):
+    device_room = None
+    def __init__(self, dev_type, code, channel):
+        self.dev_type = dev_type
+        self.code = code
+
+        try:
+            self.channel = int(channel)
+        except:
+            self.channel = 0
 
 
+        self.device_id = "oregon_rx_%s_%s_%s" % (self.dev_type, self.code, self.channel)
+
+        # full list on http://jeelabs.net/projects/cafe/wiki/Decoding_the_Oregon_Scientific_V2_protocol
+        if self.dev_type in ('1a2d', 'fa28', 'ca2c', 'fab8', '1a3d',) or self.dev_type.endswith('acc'):
+            self.device_type_name = 'Temp-Hygro'
+        else:
+            self.device_type_name = "[%s]" % self.dev_type
+
+        self.device_name = "Oregon %s (%s-%d)" % ( self.device_type_name, self.code, self.channel)
+
+        self.controls_desc = {
+                'temperature'  :  { 'value' : 0,
+                                    'meta' :  { 'type' : 'temperature',
+                                              },
+                                  },
+                'humidity'  :     { 'value' : 0,
+                                    'meta' :  { 'type' : 'rel_humidity',
+                                              },
+                                  },
+                             }
+    def get_controls(self):
+        return self.controls_desc
+
+
+
+    def handle_data(self, data):
+        print "\n" * 15
+        print "handle data!", data
+
+        var = {}
+
+        var['temperature'] = data['temp']
+        var['humidity'] = data['humidity']
+        return var
+
+
+class OregonRxHandler(object):
+    name = "oregon"
+    def __init__(self):
+        self.devices = {}
+
+    def get_device(self, data):
+        if ('code' in data) and  ('type' in data):
+            channel = data.get('channel')
+            key = (data['type'], data['code'], channel)
+            if key not in self.devices:
+                self.devices[key] = OregonRxDevice(data['type'], data['code'], channel)
+
+            return self.devices[key]
+
+
+rx_handler_classes = (OregonRxHandler, )

@@ -84,7 +84,7 @@ def get_serial():
         return ":".join(hex(random.randint(0,255))[2:].zfill(2) for _ in xrange(6))
 
 
-from mqtt_devices import *
+import mqtt_devices
 class MQTTHandler(object):
     def __init__(self):
         self.client = None
@@ -97,6 +97,16 @@ class MQTTHandler(object):
         self.noolite_start_addr = serial_num % 8192
 
         self.settings = {}
+
+        self.devices = []
+        self.rx_devices = []
+
+
+        self.rx_handlers = {}
+        for handler_class in mqtt_devices.rx_handler_classes:
+            handler = handler_class()
+            self.rx_handlers[handler.name] = handler
+
 
 
     def start(self):
@@ -135,30 +145,32 @@ class MQTTHandler(object):
             self.client.publish("/devices/%s/meta/%s" % (self.mqtt_device_id, name), value, 0, True)
 
 
-        self.devices = []
         for i in xrange(self.noolite_remotes):
             addr = self.noolite_start_addr + i
-            self.devices.append(NooliteTxDevice(addr, radio_send))
+            self.devices.append(mqtt_devices.NooliteTxDevice(addr, radio_send))
 
 
 
         for device in self.devices:
-            self.client.publish("/devices/%s/meta/name" % device.device_id, device.device_name, 0, True)
-            if device.device_room:
-                self.client.publish("/devices/%s/meta/room" % device.device_id, device.device_room, 0, True)
-            controls = device.get_controls()
+            self.publish_device(device)
 
-            for control, desc in controls.iteritems():
-                control_prefix = "/devices/%s/controls/%s" % (device.device_id, control)
-                self.client.publish(control_prefix, desc['value'], 0, True)
 
-                for meta_key, meta_val in desc['meta'].iteritems():
-                    self.client.publish(control_prefix + "/meta/%s" % meta_key, meta_val, 0, True)
+    def publish_device(self, device):
+        self.client.publish("/devices/%s/meta/name" % device.device_id, device.device_name, 0, True)
+        if device.device_room:
+            self.client.publish("/devices/%s/meta/room" % device.device_id, device.device_room, 0, True)
+        controls = device.get_controls()
 
+        for control, desc in controls.iteritems():
+            control_prefix = "/devices/%s/controls/%s" % (device.device_id, control)
+            self.client.publish(control_prefix, desc['value'], 0, True)
+
+            for meta_key, meta_val in desc['meta'].iteritems():
+                self.client.publish(control_prefix + "/meta/%s" % meta_key, meta_val, 0, True)
+
+            if not desc.get('readonly', False):
                 self.client.subscribe(control_prefix + '/on')
-                #~ print "subscribed to " , control_prefix + '/on'
-
-
+            #~ print "subscribed to " , control_prefix + '/on'
 
 
     def stop(self):
@@ -180,6 +192,25 @@ class MQTTHandler(object):
         self.client.publish(topic, str(self.counters[protocol_handler]))
 
         # blah
+
+        rx_handler = self.rx_handlers.get(protocol_handler.name)
+        if rx_handler is not None:
+            rx_device = rx_handler.get_device(data)
+            if rx_device is not None:
+                if rx_device not in self.rx_devices:
+                    self.rx_devices.append(rx_device)
+                    self.publish_device(rx_device)
+
+
+                control_values = rx_device.handle_data(data)
+                if control_values:
+
+                    for control, value in control_values.iteritems():
+                        control_topic = "/devices/%s/controls/%s" % (rx_device.device_id, control)
+                        self.client.publish(control_topic, value, 0, True)
+
+
+
 
     def on_mqtt_message(self, mosq, obj, msg):
         #~ print "on_mqtt_message " , msg.topic
