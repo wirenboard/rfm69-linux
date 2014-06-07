@@ -1,3 +1,9 @@
+wb-homa-ism-radio (1.04) stable; urgency=medium
+
+  * Add support for oregon v2 thermo&gygro sensors 
+
+ -- Evgeny Boger <boger@contactless.ru>  Sat, 07 Jun 2014 04:40:17 +0400
+
 wb-homa-ism-radio (1.03) stable; urgency=medium
 
   * switch instead of on/off, noise filtering 
