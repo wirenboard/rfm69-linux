@@ -1,3 +1,9 @@
+wb-homa-ism-radio (1.03) stable; urgency=medium
+
+  * switch instead of on/off, noise filtering 
+
+ -- Evgeny Boger <boger@contactless.ru>  Fri, 06 Jun 2014 04:47:07 +0400
+
 wb-homa-ism-radio (1.02) stable; urgency=medium
 
   * add option to change the number of noolite devices
