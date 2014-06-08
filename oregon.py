@@ -35,7 +35,7 @@ class OregonV2ProtocolHandler(protocols.BaseRCProtocolHandler):
             return
 
         nibbles = [int(utils.invert(s[::-1]),2) for s in utils.batch_gen(packet[1:],4)]
-
+        #~ print nibbles
 
         temp = nibbles[11] * 10 + nibbles[10] + nibbles[9] * 0.1
         if nibbles[12] != 0:
@@ -46,6 +46,12 @@ class OregonV2ProtocolHandler(protocols.BaseRCProtocolHandler):
 
         sensor_type = ((nibbles[1] << 12)+(nibbles[0] << 8)+(nibbles[3] << 4) + nibbles[2])
         rolling_code = (nibbles[7] << 4) + nibbles[6]
+
+        expected_checksum = sum(nibbles[:16]) - 0xA
+        checksum = nibbles[17] * 16 + nibbles[16]
+
+        if checksum != expected_checksum:
+            return
 
         raw = packet
         kw = {}
