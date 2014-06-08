@@ -126,6 +126,9 @@ class MQTTHandler(object):
         self.client.subscribe(self.random_topic)
         self.client.publish(self.random_topic, '1')
 
+        #~ self.client.publish("/devices/%s/controls/status" % self.mqtt_device_id, "OK", 0, True)
+        #~ self.client.publish("/devices/%s/controls/status/meta/type" % self.mqtt_device_id, "text", 0, True)
+        #~ self.client.will_set("/devices/%s/controls/status" % self.mqtt_device_id, "Daemon is not running", 0, True)
 
         self.client.loop_start()
 
@@ -174,7 +177,7 @@ class MQTTHandler(object):
 
 
     def stop(self):
-        self.mqtt_client.loop_stop()
+        self.client.loop_stop()
 
 
     def handle_recv_data(self, protocol_handler, data):
