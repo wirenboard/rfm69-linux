@@ -96,7 +96,14 @@ class MQTTHandler(object):
         serial_num = serial_parts[0]*16+ serial_parts[1]
         self.noolite_start_addr = serial_num % 8192
 
-        self.settings = {}
+
+        self.initial_retained_received = False
+        self.initial_retained_settings = {}
+        self.settings = { 'room' : 'System',
+                          'noolite_remotes' : '4',
+                          'noolite_remotes_custom': '-'
+                         }
+
 
         self.devices = []
         self.rx_devices = []
@@ -132,27 +139,109 @@ class MQTTHandler(object):
 
         self.client.loop_start()
 
-    def on_config_received(self):
-        # check meta settings correctness and set default values
-        if not self.settings.get('room'):
-            self.settings['room'] = 'System'
-        try:
-            val = self.settings.get('noolite_remotes')
-            self.noolite_remotes = int(val)
-        except (TypeError, ValueError):
-            self.noolite_remotes = 4
-            self.settings['noolite_remotes'] = str(self.noolite_remotes)
 
-        # publish current settings
-        for name, value in self.settings.iteritems():
-            self.client.publish("/devices/%s/meta/%s" % (self.mqtt_device_id, name), value, 0, True)
+    def publish_config_parameter(self, parameter, value):
+        self.client.publish("/devices/%s/meta/%s" % (self.mqtt_device_id, parameter), value, 0, True)
+
+    def try_process_config_parameter(self, parameter, value):
+        #~ print "try_process_config_parameter(%s, %s)" % ( parameter, value)
+
+        # empty values are not allowed
+        if not value:
+            return False
+
+        if parameter == 'noolite_remotes':
+            try:
+                self.noolite_remotes = int(value)
+            except (TypeError, ValueError):
+                pass
+                print >>sys.stderr, "error parsing noolite_remotes = ", value
+
+                return False
 
 
-        for i in xrange(self.noolite_remotes):
-            addr = self.noolite_start_addr + i
+        elif parameter == 'noolite_remotes_custom':
+            if value == '-':
+                value = ''
+            parts = value.split(',')
+            #~ if parts:
+            try:
+                addrs = [int(addr, 16) for addr in parts if addr]
+                for addr in addrs:
+                    assert 0x0000 <= addr <= 0xFFFF
+                self.noolite_custom_addrs = addrs
+            except:
+                print >>sys.stderr, "cannot parse noolite_remotes_custom"
+                import traceback; traceback.print_exc()
+                return False
+
+
+
+        return True
+
+
+
+
+
+    def process_received_config_parameter(self, parameter, value):
+        """ returns True in case new valid config parameter received """
+
+        if not self.settings.has_key(parameter):
+            return False # unknown parameter, do nothing
+        if self.settings[parameter] == value:
+            return False # do nothing
+
+        if self.try_process_config_parameter(parameter, value):
+            self.settings[parameter] = value
+            return True
+        else:
+            # invalid value, publish the last one
+            self.publish_config_parameter(parameter, self.settings[parameter])
+
+        return False
+
+
+    def on_config_parameter_received(self, parameter, value):
+        if self.initial_retained_received:
+            if self.process_received_config_parameter(parameter, value):
+                self.apply_settings()
+        else:
+            self.initial_retained_settings[parameter] = value
+
+
+    def on_initial_retained_received(self):
+        self.initial_retained_received = True
+
+        # publish the config parameters which absent in the retained config we've got from MQTT
+        for parameter in self.settings:
+            if parameter not in self.initial_retained_settings:
+                self.publish_config_parameter(parameter, self.settings[parameter])
+
+                # also parse default config parameter
+                self.try_process_config_parameter(parameter, self.settings[parameter])
+
+
+        # then parse the ones we've got from MQTT
+        for parameter, value in self.initial_retained_settings.iteritems():
+            #~ print "new config", parameter, value
+            if self.settings.has_key(parameter):
+                ok = self.process_received_config_parameter(parameter, value)
+
+                # in case new parameter was invalid, parse the default one
+                if not ok:
+                    self.try_process_config_parameter(parameter, self.settings[parameter])
+
+
+
+        self.initial_retained_settings = None
+        self.apply_settings()
+
+    def apply_settings(self):
+        noolite_addrs = [(self.noolite_start_addr + i) for i in xrange(self.noolite_remotes)]
+
+        noolite_addrs += self.noolite_custom_addrs
+        for addr in noolite_addrs:
             self.devices.append(mqtt_devices.NooliteTxDevice(addr, radio_send))
-
-
 
         for device in self.devices:
             self.publish_device(device)
@@ -221,9 +310,13 @@ class MQTTHandler(object):
 
         if mosquitto.topic_matches_sub('/devices/%s/meta/+' % self.mqtt_device_id, msg.topic):
             name = parts[4]
-            self.settings[name] = msg.payload
+            self.on_config_parameter_received(name, msg.payload)
+
+
+
+
         elif msg.topic == self.random_topic:
-            self.on_config_received()
+            self.on_initial_retained_received()
         elif mosquitto.topic_matches_sub('/devices/+/controls/+/on' , msg.topic):
 
             device_id = parts[2]
