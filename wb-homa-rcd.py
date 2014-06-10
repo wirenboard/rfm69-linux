@@ -101,7 +101,8 @@ class MQTTHandler(object):
         self.initial_retained_settings = {}
         self.settings = { 'room' : 'System',
                           'noolite_remotes' : '4',
-                          'noolite_remotes_custom': '-'
+                          'noolite_remotes_custom': '-',
+                          'rssi_threshold' : '-85',
                          }
 
 
@@ -175,6 +176,15 @@ class MQTTHandler(object):
                 import traceback; traceback.print_exc()
                 return False
 
+        elif parameter == 'rssi_threshold':
+            try:
+                val_int = int(value)
+                assert -127 <= val_int <= 0
+                self.rssi_threshold = val_int
+            except:
+                print >>sys.stderr, "cannot parse rssi_threshold"
+                return False
+
 
 
         return True
@@ -215,6 +225,7 @@ class MQTTHandler(object):
         # publish the config parameters which absent in the retained config we've got from MQTT
         for parameter in self.settings:
             if parameter not in self.initial_retained_settings:
+                print "absent val", parameter
                 self.publish_config_parameter(parameter, self.settings[parameter])
 
                 # also parse default config parameter
@@ -246,6 +257,7 @@ class MQTTHandler(object):
         for device in self.devices:
             self.publish_device(device)
 
+        radio.setRSSIThreshold(self.rssi_threshold)
 
     def publish_device(self, device):
         self.client.publish("/devices/%s/meta/name" % device.device_id, device.device_name, 0, True)
