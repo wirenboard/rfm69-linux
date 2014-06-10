@@ -346,8 +346,11 @@ class RFM69(object):
 		self.carrier = freq
 
 
-	def setRSSIThreshold(self, threshold):
-		self.writeReg( REG_RSSITHRESH, threshold )
+	def setRSSIThreshold(self, threshold_dbm):
+		""" must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm """
+		sensitivity = -threshold_dbm * 2
+		assert 0 <= sensitivity <= 0xFF
+		self.writeReg( REG_RSSITHRESH, sensitivity)
 
 	def config(self):
 		self.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY )
@@ -368,7 +371,7 @@ class RFM69(object):
 		self.writeReg( REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_01 ) #DIO0 is the only IRQ we're using
 		self.writeReg( REG_DIOMAPPING2, RF_DIOMAPPING2_DIO5_01 | RF_DIOMAPPING2_DIO4_10)
 
-		self.setRSSIThreshold(170) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
+		self.setRSSIThreshold(-85)
 
 
 		self.writeReg( REG_PREAMBLELSB, 5 ) # default 3 preamble bytes 0xAAAAAA
