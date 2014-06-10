@@ -1,3 +1,11 @@
+wb-homa-ism-radio (1.06) stable; urgency=medium
+
+  * realtime settings update
+  * allow for custom noolite remote IDs
+  * add RSSI threshold config parameter
+
+ -- Evgeny Boger <boger@contactless.ru>  Tue, 10 Jun 2014 05:01:53 +0400
+
 wb-homa-ism-radio (1.05) stable; urgency=medium
 
   * Add checksum verification for oregon sensors
