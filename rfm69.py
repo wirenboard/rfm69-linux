@@ -177,7 +177,7 @@ class RFM69(object):
 			else:
 				rolling_counter += 1
 
-			if rolling_counter >= 3:
+			if rolling_counter >= 20:
 				return False
 
 		return True
@@ -346,6 +346,8 @@ class RFM69(object):
 		self.carrier = freq
 
 
+	def setRSSIThreshold(self, threshold):
+		self.writeReg( REG_RSSITHRESH, threshold )
 
 	def config(self):
 		self.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY )
@@ -365,9 +367,8 @@ class RFM69(object):
 
 		self.writeReg( REG_DIOMAPPING1, RF_DIOMAPPING1_DIO0_01 | RF_DIOMAPPING1_DIO2_01 ) #DIO0 is the only IRQ we're using
 		self.writeReg( REG_DIOMAPPING2, RF_DIOMAPPING2_DIO5_01 | RF_DIOMAPPING2_DIO4_10)
-		self.writeReg( REG_RSSITHRESH, 170 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
-		#~ self.writeReg( REG_RSSITHRESH, 228 ) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
 
+		self.setRSSIThreshold(170) #must be set to dBm = (-Sensitivity / 2) - default is 0xE4=228 so -114dBm
 
 
 		self.writeReg( REG_PREAMBLELSB, 5 ) # default 3 preamble bytes 0xAAAAAA
@@ -376,7 +377,7 @@ class RFM69(object):
 
 		self.writeReg( REG_SYNCVALUE1, 0xaa )
 		self.writeReg( REG_SYNCVALUE2, 0x66 )
-
+#~
 		#~  0x2f  self.writeReg( REG_SYNCVALUE1, 0xaa )      #attempt to make this compatible with sync1 byte of RFM12B lib
 		#~  0x2f  self.writeReg( REG_SYNCVALUE2, 0xaa )
 		#~  0x2f  self.writeReg( REG_SYNCVALUE3, 0xaa )
