@@ -1,10 +1,18 @@
+wb-homa-ism-radio (1.07) UNRELEASED; urgency=medium
+
+  * Add support for temp-only Oregon Scientific sensors
+  * Decode Oregon Scientific messages even for unsupported sensors 
+
+ -- boger <boger@boger-ThinkPad-Edge-E440>  Wed, 02 Jul 2014 09:36:15 +0400
+
 wb-homa-ism-radio (1.06) stable; urgency=medium
 
+  [ Evgeny Boger ]
   * realtime settings update
   * allow for custom noolite remote IDs
   * add RSSI threshold config parameter
 
- -- Evgeny Boger <boger@contactless.ru>  Tue, 10 Jun 2014 05:01:53 +0400
+ -- boger <boger@boger-ThinkPad-Edge-E440>  Wed, 02 Jul 2014 09:35:47 +0400
 
 wb-homa-ism-radio (1.05) stable; urgency=medium
 

@@ -96,9 +96,10 @@ class NooliteTxDevice(object):
 
 class OregonRxDevice(object):
     device_room = None
-    def __init__(self, dev_type, code, channel):
+    def __init__(self, dev_type, code, channel, data = {}):
         self.dev_type = dev_type
         self.code = code
+
 
         try:
             self.channel = int(channel)
@@ -109,23 +110,27 @@ class OregonRxDevice(object):
         self.device_id = "oregon_rx_%s_%s_%s" % (self.dev_type, self.code, self.channel)
 
         # full list on http://jeelabs.net/projects/cafe/wiki/Decoding_the_Oregon_Scientific_V2_protocol
-        if self.dev_type in ('1a2d', 'fa28', 'ca2c', 'fab8', '1a3d',) or self.dev_type.endswith('acc'):
-            self.device_type_name = 'Temp-Hygro'
-        else:
-            self.device_type_name = "[%s]" % self.dev_type
+        #~ if self.dev_type in ('1a2d', 'fa28', 'ca2c', 'fab8', '1a3d',) or self.dev_type.endswith('acc'):
+            #~ self.device_type_name = 'Temp-Hygro'
+        #~ else:
+        self.device_type_name = "[%s]" % self.dev_type
 
-        self.device_name = "Oregon %s (%s-%d)" % ( self.device_type_name, self.code, self.channel)
+        self.device_name = "Oregon Sensor %s (%s-%d)" % ( self.device_type_name, self.code, self.channel)
 
-        self.controls_desc = {
-                'temperature'  :  { 'value' : 0,
-                                    'meta' :  { 'type' : 'temperature',
-                                              },
-                                  },
-                'humidity'  :     { 'value' : 0,
-                                    'meta' :  { 'type' : 'rel_humidity',
-                                              },
-                                  },
-                             }
+        self.controls_desc = {}
+
+        if 'temp' in data:
+            self.controls_desc['temperature'] =   { 'value' : 0,
+                                                    'meta' :  { 'type' : 'temperature',
+                                                              },
+                                                  }
+        if 'humidity' in data:
+            self.controls_desc['humidity'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'rel_humidity',
+                                                             },
+                                                 }
+
+
     def get_controls(self):
         return self.controls_desc
 
@@ -152,7 +157,7 @@ class OregonRxHandler(object):
             channel = data.get('channel')
             key = (data['type'], data['code'], channel)
             if key not in self.devices:
-                self.devices[key] = OregonRxDevice(data['type'], data['code'], channel)
+                self.devices[key] = OregonRxDevice(data['type'], data['code'], channel, data)
 
             return self.devices[key]
 
