@@ -1,9 +1,9 @@
-wb-homa-ism-radio (1.07) UNRELEASED; urgency=medium
+wb-homa-ism-radio (1.07) stable; urgency=medium
 
   * Add support for temp-only Oregon Scientific sensors
   * Decode Oregon Scientific messages even for unsupported sensors 
 
- -- boger <boger@boger-ThinkPad-Edge-E440>  Wed, 02 Jul 2014 09:36:15 +0400
+ -- Evgeny Boger <boger@contactless.ru>  Wed, 02 Jul 2014 09:45:23 +0400
 
 wb-homa-ism-radio (1.06) stable; urgency=medium
 
