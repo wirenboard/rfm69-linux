@@ -142,9 +142,60 @@ class OregonRxDevice(object):
 
         var = {}
 
-        var['temperature'] = data['temp']
-        var['humidity'] = data['humidity']
+        if 'temp' in data:
+            var['temperature'] = data['temp']
+        if 'humidity' in data:
+            var['humidity'] = data['humidity']
         return var
+
+
+
+
+
+
+
+
+class NooliteRxDevice(object):
+    device_room = None
+    def __init__(self, addr, data = {}):
+        self.addr = addr
+        self.addr_hex = hex(self.addr)
+
+
+        self.device_id = "noolite_tx_" + self.addr_hex
+
+
+        self.device_name = "Noolite Sensor %s " % (self.addr_hex)
+
+        self.controls_desc = {}
+
+        if 'temp' in data:
+            self.controls_desc['temperature'] =   { 'value' : 0,
+                                                    'meta' :  { 'type' : 'temperature',
+                                                              },
+                                                  }
+        if 'humidity' in data:
+            self.controls_desc['humidity'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'rel_humidity',
+                                                             },
+                                                 }
+
+
+
+
+    def get_controls(self):
+        return self.controls_desc
+
+
+    def handle_data(self, data):
+        var = {}
+        if 'temp' in data:
+            var['temperature'] = data['temp']
+        if 'humidity' in data:
+            var['humidity'] = data['humidity']
+
+        return var
+
 
 
 class OregonRxHandler(object):
@@ -161,5 +212,18 @@ class OregonRxHandler(object):
 
             return self.devices[key]
 
+class NooliteRxHandler(object):
+    name = "noo"
+    def __init__(self):
+        self.devices = {}
 
-rx_handler_classes = (OregonRxHandler, )
+    def get_device(self, data):
+        if data.get('temp'):
+            if 'addr' in data:
+                key = data['addr']
+                if key not in self.devices:
+                    self.devices[key] = NooliteRxDevice(int(data['addr'], 16), data)
+
+                return self.devices[key]
+
+rx_handler_classes = (OregonRxHandler,NooliteRxHandler )
