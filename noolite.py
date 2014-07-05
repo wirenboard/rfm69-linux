@@ -1,3 +1,4 @@
+#coding: utf-8
 import binascii
 
 import protocols
@@ -73,72 +74,165 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
 
     def calcChecksum(self, flip_bit, cmd, addr, fmt = 0,  args=[]):
+        #~ print "calcChecksum"
+        #~ print "flip_bit=", flip_bit
+        #~ print "cmd=", cmd
+        #~ print "addr=", addr
+        #~ print "fmt=", fmt
+        #~ print "args=", args
+
         addr_hi = addr >> 8
         addr_lo = addr & 0x00ff
 
-        data = chr(((cmd << 1) | flip_bit) << 3)
-        if fmt == 1:
-            data += chr(args[0])
+        if cmd < 16:
+            data = chr(((cmd << 1) | flip_bit) << 3)
+        else:
+            data = chr(flip_bit << 7) + chr(cmd)
+
+        #~ if fmt == 1:
+        for arg in args:
+            data += chr(arg)
+
+
         data+=  chr(addr_lo) + chr(addr_hi) +chr(fmt)
+        #~ print "data=", binascii.hexlify(data)
         return crc8_maxim(data)
 
     def parsePacket(self, packet):
-        sextet_1 = packet[:6]
-        flip_bit = int(sextet_1[1], 2)
-        cmd = int(sextet_1[2:][::-1], 2)
+        if len(packet) < 38:
+            return
+        #~ print len(packet)
+        remainder =  (len(packet) - 6 ) % 4
+        if remainder != 0:
+            packet += '0'*(4-remainder)
 
 
-        addr_lo = int(packet[6:14][::-1], 2)
-        addr_hi = int(packet[14:22][::-1], 2)
+
+        crc = int(packet[-8:][::-1], 2)
+        fmt = int(packet[-16:-8][::-1], 2)
+        addr_lo = int(packet[-32:-24][::-1], 2)
+        addr_hi = int(packet[-24:-16][::-1], 2)
         addr = (addr_hi << 8)  + addr_lo
 
-        fmt = int(packet[22:30][::-1], 2)
 
-        crc = int(packet[30:38][::-1], 2)
+        if fmt < 4:
+            sextet_1 = packet[:6]
+            flip_bit = int(sextet_1[1], 2)
+            cmd = int(sextet_1[2:][::-1], 2)
+            args_data = packet[6:-32]
+        else:
+            dectet_1 = packet[:10]
+            flip_bit = int(dectet_1[1], 2)
+            cmd = int(dectet_1[2:][::-1], 2)
 
-        return flip_bit, cmd, addr, fmt, crc
+            args_data = packet[10:-32]
+
+
+        #~ print "fmt=", fmt, len(args_data)
+        #~ print args_data
+        if fmt == 0:
+            if len(args_data) != 0:
+               return
+        elif fmt == 1:
+            if len(args_data) != 8:
+               return
+        elif fmt == 3:
+            if len(args_data) != 32:
+               return
+        elif fmt == 4:
+            if len(args_data) != 0:
+               return
+        elif fmt == 7:
+            if len(args_data) != 32:
+               return
+        else:
+            return
+
+        if args_data:
+            args = [int(x[::-1], 2) for x in utils.batch_gen(args_data, 8, align_right=True)]
+        else:
+            args = []
+
+        return flip_bit, cmd, addr, fmt, crc, args
 
     def tryDecode(self, data):
         bitstream = utils.get_bits(data)
         #~ print bitstream, len(bitstream)
         bitstream = utils.strip_preamble(bitstream)
         bitstream = utils.strip_tail(bitstream, ignore_bits=4)
+        #~ print bitstream, len(bitstream)
 
         #~ print bitstream, len(bitstream)
-        if '000' in bitstream[2:]:
-                print utils.manchester_decode(bitstream[2:][:bitstream[2:].index('000')])
+        #~ if '000' in bitstream[2:]:
+                #~ print utils.manchester_decode(bitstream[2:][:bitstream[2:].index('000')])
+
+        #~ print len(bitstream)
 
 
-        if len(bitstream) not in (156, 157, 327, 315):
+
+        parts = bitstream.rsplit('000')
+        if parts[0] == '':
+            parts = parts[1:]
+        if len(parts) != 2:
             return
 
-        first_copy = bitstream[2:79]
-        #~ second_copy = ss[81:]
+        for part in parts:
+            first_copy = part
+            #~ print "first_copy=", first_copy
+            #~ second_copy = ss[81:]
 
-        packet = utils.manchester_decode(first_copy)
-        if len(packet) != 38:
-            return
-        flip_bit, cmd, addr, fmt, crc = self.parsePacket(packet)
-        crc_expected = self.calcChecksum(flip_bit, cmd, addr, fmt)
+            packet = utils.manchester_decode('0' + first_copy)
 
-        if crc != crc_expected:
-            return
+            #~ if packet.startswith('00'):
+                #~ packet = packet[2:]
 
-
+            #~ print len(packet), packet
 
 
-        raw = packet
-        kw = {}
-        kw['flip'] = str(flip_bit)
-        kw['cmd'] = str(cmd)
-        kw['fmt'] = hex(fmt)[2:]
-        kw['addr'] = hex(addr)[2:]
-        kw['raw'] = raw
-        #~ kw['crc'] = hex(crc)[2:]
-        #~ kw['crc_e'] = hex(crc_expected)[2:]
+            parsed_packet = self.parsePacket(packet)
+            if parsed_packet is None:
+                continue
+
+            flip_bit, cmd, addr, fmt, crc, args = parsed_packet
+            #~ print "args=", args
+            crc_expected = self.calcChecksum(flip_bit, cmd, addr, fmt, args)
+            #~ print crc, crc_expected
+            if crc != crc_expected:
+                continue
 
 
-        return kw
+            raw = packet
+            kw = {}
+            kw['flip'] = str(flip_bit)
+            kw['cmd'] = str(cmd)
+            kw['fmt'] = hex(fmt)[2:]
+            kw['addr'] = hex(addr)[2:]
+            kw['raw'] = raw
+
+            if (fmt == 7) and (cmd == 21):
+                temp = ((args[1] & 0x0F) << 8) + args[0]
+                if temp > 0x7ff:
+                    temp = temp - 0x1000
+                temp = temp * 0.1
+
+                rel_humidity = args[2]
+
+                lowbat = 1 if (args[1] & 0b10000000) else 0
+
+
+
+                kw['temp'] = "%.1f" % temp
+                kw['rh'] =str(rel_humidity)
+                kw['lowbat'] = str(lowbat)
+
+
+
+
+            #~ kw['crc'] = hex(crc)[2:]
+            #~ kw['crc_e'] = hex(crc_expected)[2:]
+
+
+            return kw
 
     def tryEncode(self, kw):
         if 'raw' in kw:
@@ -207,15 +301,27 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         #~ print data
         return data
 
-#ch:2 r:1 g:1 b:1        110110 10000000 10000000 10000000 00000000 10011111 10100100 11000000 11001011  fmt=3
-#ch:2 r:1 g:1 b:2        100110 10000000 10000000 01000000 00000000 10011111 10100100 11000000 11101101  fmt=3
-#ch:2 r:255 g:255 b:255  110110 11111111 11111111 11111111 00000000 10011111 10100100 11000000 10110001  fmt=3
-#ch:14 r:1 g:1 b:2       110110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
-#ch:14 r:1 g:1 b:2       100110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 01100110  fmt=3
-#ch:15 r:1 g:1 b:2       110110 10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
-#ch:2 switch mode        110100                                1000 10011111 10100100 00100000 00010101  fmt=4
-#ch:2 switch mode        110100                                1000 10011111 10100100 00100000 00010101  fmt=4
-#ch:2 switch color       111000                                1000 10011111 10100100 00100000 00000100  fmt=4
-#ch:2 lvl=46             110110                            01110100 10011111 10100100 10000000 10010100  fmt=1
-#ch:2 cmd=10             110101                                     10011111 10100100 00000000 00010001  fmt=0
-#ch:2 off_ch             110000                                     10011111 10100100 00000000 10000100  fmt=0
+#ch:2 r:1 g:1 b:1        110110          10000000 10000000 10000000 00000000 10011111 10100100 11000000 11001011  fmt=3
+#ch:2 r:1 g:1 b:2        100110          10000000 10000000 01000000 00000000 10011111 10100100 11000000 11101101  fmt=3
+#ch:2 r:255 g:255 b:255  110110          11111111 11111111 11111111 00000000 10011111 10100100 11000000 10110001  fmt=3
+#ch:14 r:1 g:1 b:2       110110          10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
+#ch:14 r:1 g:1 b:2       100110          10000000 10000000 01000000 00000000 11111111 10100100 11000000 01100110  fmt=3
+#ch:15 r:1 g:1 b:2       110110          10000000 10000000 01000000 00000000 11111111 10100100 11000000 00110010  fmt=3
+#ch:2 switch mode        11     01001000                                     10011111 10100100 00100000 00010101  fmt=4, cmd=18
+#ch:2 switch color       11     10001000                                     10011111 10100100 00100000 00000100  fmt=4, cmd=17
+#ch:2 lvl=46             110110                                     01110100 10011111 10100100 10000000 10010100  fmt=1
+#ch:2 cmd=10             110101                                              10011111 10100100 00000000 00010001  fmt=0
+#ch:2 off_ch             110000                                              10011111 10100100 00000000 10000100  fmt=0
+
+#
+# temp/hum:
+#     flip, 2 bit -->    10     10101000 11100000 10000101 00100110 11111111 11111001 00101000 11100000 00111000
+#     cmd 8 bit              ---^    |           | ^ ^    ^        ^     addr_lo  addr_hi    fmt      crc
+#     temperature, signed, 0.1C  --> |-- 12 bit -| | |    |        |
+#     unknown, 3bit, 0b010  ------->---------------- |    |        |
+#     bat low, 1bit   ------------->------------------    |        |
+#     humidity, 8 bit ------------->-----------------------        |
+#     unknown, 8 bit, always 0xFF so far -------->------------------
+
+
+

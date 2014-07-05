@@ -1,8 +1,19 @@
 import re
 
-def batch_gen(data, batch_size):
-	for i in range(0, len(data), batch_size):
-		yield data[i:i+batch_size]
+def batch_gen(data, batch_size, align_right = False):
+	if align_right:
+		if len(data) <= batch_size:
+			yield data
+		else:
+			seq = list(reversed(range(len(data) - batch_size ,0, -batch_size)))
+
+			yield data[:seq[0]]
+			for i in seq:
+				yield data[i:i+batch_size]
+
+	else:
+		for i in range(0, len(data), batch_size):
+			yield data[i:i+batch_size]
 
 
 def get_bits(data):
