@@ -1,3 +1,11 @@
+wb-homa-ism-radio (1.08) stable; urgency=medium
+
+  * Preliminary support for Noolite PT111 thermo-hygro sensor
+  * Many improvements in Noolite protocol parsing
+  * fix crash on oregon temp-only sensor data
+
+ -- Evgeny Boger <boger@contactless.ru>  Sat, 05 Jul 2014 07:47:22 +0400
+
 wb-homa-ism-radio (1.07) stable; urgency=medium
 
   * Add support for temp-only Oregon Scientific sensors
