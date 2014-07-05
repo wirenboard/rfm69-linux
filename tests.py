@@ -30,16 +30,16 @@ class TestNoolite(unittest.TestCase):
 
     def test_thermometer(self):
         self.check_decode('aaaaaaaaaaaaaaa86666aa666559a595a55555569a66a56aaa6960cccd54cccab34b2b4aaaaaad34cd4ad554d2c000000000007fffffffffffffffff',
-                          'addr=149f    cmd=21  flip=0  fmt=7 temp=-17.2 lowbat=0 rh=59')
+                          'addr=149f    cmd=21  flip=0  fmt=7 temp=-17.2 lowbat=0 humidity=59')
 
         self.check_decode('aaaaaaaaaaaaaaa85666aa96a6a9a995a55555569a66a56aa66650accd552d4d53532b4aaaaaad34cd4ad54ccca00000000000000000001ffffffff0',
-                          'addr=149f    cmd=21  flip=1  fmt=7 temp=28.0 lowbat=0 rh=58')
+                          'addr=149f    cmd=21  flip=1  fmt=7 temp=28.0 lowbat=0 humidity=58')
 
         self.check_decode('aaaaaaaaaaaaaaa85666a65969a9aa6aa55555569a66a56aaaa590accd4cb2d35354d54aaaaaad34cd4ad5554b200000000000000001fffffc7fffe0',
-                          'addr=149f	temp=62.1	lowbat=0	fmt=7	cmd=21	flip=1 	rh=4')
+                          'addr=149f	temp=62.1	lowbat=0	fmt=7	cmd=21	flip=1 	humidity=4')
 
         self.check_decode('aaaaaaaaaaaaa1599a9a96a6a665aa9555555a699a95aaaaa542b335352d4d4ccb552aaaaab4d3352b55554a8000000000000000000ffff87fffffff',
-                          'addr=149f	temp=56.1	lowbat=1	fmt=7	cmd=21	flip=1 	rh=6')
+                          'addr=149f	temp=56.1	lowbat=1	fmt=7	cmd=21	flip=1 	humidity=6')
 
 
 

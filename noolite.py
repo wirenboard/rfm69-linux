@@ -222,7 +222,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
 
                 kw['temp'] = "%.1f" % temp
-                kw['rh'] =str(rel_humidity)
+                kw['humidity'] =str(rel_humidity)
                 kw['lowbat'] = str(lowbat)
 
 
