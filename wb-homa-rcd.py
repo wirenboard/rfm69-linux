@@ -9,17 +9,17 @@ import os
 from collections import deque
 from weakref import WeakValueDictionary
 import binascii
+import random
+import copy
 
 import mosquitto
 
 import rfm69
-import random
 
 radio_send_queue = Queue.Queue()
 clients_send_queue = Queue.Queue()
 
 client_handlers = WeakValueDictionary()
-
 
 
 radio = None
@@ -115,7 +115,7 @@ class MQTTHandler(object):
             handler = handler_class()
             self.rx_handlers[handler.name] = handler
 
-
+        self.device_controls_cache = {}
 
     def start(self):
         self.client = mosquitto.Mosquitto(self.mqtt_device_id)
@@ -256,6 +256,7 @@ class MQTTHandler(object):
 
         for device in self.devices:
             self.publish_device(device)
+            self.publish_device_controls(device)
 
         radio.setRSSIThreshold(self.rssi_threshold)
 
@@ -263,16 +264,45 @@ class MQTTHandler(object):
         self.client.publish("/devices/%s/meta/name" % device.device_id, device.device_name, 0, True)
         if device.device_room:
             self.client.publish("/devices/%s/meta/room" % device.device_id, device.device_room, 0, True)
+
+
+    def publish_device_controls(self, device):
+        def recursive_dict_diff(first, second):
+            diff = {}
+            for key, value_second in second.iteritems():
+                value_first = first.get(key)
+                if value_second != value_first:
+                    if isinstance(value_second, dict):
+                        if isinstance(value_first, dict):
+                            diff[key] = recursive_dict_diff(value_first, value_second)
+                        else:
+                            diff[key] = value_second
+                    else:
+                        diff[key] = value_second
+            return diff
+
+
+
+        cached_controls_data = self.device_controls_cache.get(device.device_id, {})
         controls = device.get_controls()
+        controls_diff = recursive_dict_diff(cached_controls_data, controls)
 
-        for control, desc in controls.iteritems():
+        self.device_controls_cache[device.device_id] = copy.deepcopy(controls)
+
+
+        for control, desc in controls_diff.iteritems():
             control_prefix = "/devices/%s/controls/%s" % (device.device_id, control)
-            self.client.publish(control_prefix, desc['value'], 0, True)
+            if 'value' in desc:
+                self.client.publish(control_prefix, desc['value'], 0, True)
 
-            for meta_key, meta_val in desc['meta'].iteritems():
+            readonly = desc.get('readonly', False)
+            if readonly:
+                desc.get('meta', {})['readonly'] = '1'
+
+            for meta_key, meta_val in desc.get('meta',{}).iteritems():
                 self.client.publish(control_prefix + "/meta/%s" % meta_key, meta_val, 0, True)
 
-            if not desc.get('readonly', False):
+            if not readonly:
                 self.client.subscribe(control_prefix + '/on')
             #~ print "subscribed to " , control_prefix + '/on'
 
@@ -299,19 +329,22 @@ class MQTTHandler(object):
 
         rx_handler = self.rx_handlers.get(protocol_handler.name)
         if rx_handler is not None:
-            rx_device = rx_handler.get_device(data)
+            rx_device = rx_handler.handle_data(data)
+
             if rx_device is not None:
                 if rx_device not in self.rx_devices:
                     self.rx_devices.append(rx_device)
                     self.publish_device(rx_device)
+                self.publish_device_controls(rx_device)
 
-
-                control_values = rx_device.handle_data(data)
-                if control_values:
-
-                    for control, value in control_values.iteritems():
-                        control_topic = "/devices/%s/controls/%s" % (rx_device.device_id, control)
-                        self.client.publish(control_topic, value, 0, True)
+#~
+#~
+                #~ control_values = rx_device.handle_data(data)
+                #~ if control_values:
+#~
+                    #~ for control, value in control_values.iteritems():
+                        #~ control_topic = "/devices/%s/controls/%s" % (rx_device.device_id, control)
+                        #~ self.client.publish(control_topic, value, 0, True)
 
 
 

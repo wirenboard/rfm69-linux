@@ -1,5 +1,4 @@
-from noolite import NooliteProtocolHandler
-
+from noolite import NooliteProtocolHandler, NooliteCommands
 
 
 
@@ -20,6 +19,7 @@ class NooliteTxDevice(object):
                 'level'  :  { 'value' : 0,
                               'meta' :  { 'type' : 'range',
                                           'order' : '1',
+                                          'max' : 100,
                                         }
                             },
                 'state'    : { 'value' : 0,
@@ -53,6 +53,13 @@ class NooliteTxDevice(object):
     def get_controls(self):
         return self.controls_desc
 
+    def encode_level(self, level):
+        if level < 0:
+            return 0
+        else:
+            return int(round((100 if (level > 100) else level) * 1.23 + 34))
+
+
 
     def update_control(self, control, value):
         self.flip = 0 if self.flip else 1
@@ -65,23 +72,22 @@ class NooliteTxDevice(object):
         var['arg'] = '0'
 
         if control == 'bind':
-            var['cmd'] = 15
+            var['cmd'] = NooliteCommands.Bind
         elif control == 'unbind':
-            var['cmd'] = 9
+            var['cmd'] = NooliteCommands.Unbind
         elif control == 'state':
             if int(value):
-                var['cmd'] = 2
+                var['cmd'] = NooliteCommands.On
             else:
-                var['cmd'] = 0
-        elif control == 'switch':
-            var['cmd'] = 4
-        elif control == 'level':
-            var['cmd'] = 6
-            val_int = int(value)
-            if val_int > 255: val_int = 255
-            if val_int < 0: val_int = 0
+                var['cmd'] = NooliteCommands.Off
 
-            var['arg'] = str(val_int)
+        elif control == 'switch':
+            var['cmd'] = NooliteCommands.Switch
+
+        elif control == 'level':
+            var['cmd'] = NooliteCommands.SetLevel
+
+            var['arg'] = str(self.encode_level(int(value)))
         else:
             print "unknown control "
             return
@@ -123,11 +129,13 @@ class OregonRxDevice(object):
             self.controls_desc['temperature'] =   { 'value' : 0,
                                                     'meta' :  { 'type' : 'temperature',
                                                               },
+                                                    'readonly' : True,
                                                   }
         if 'humidity' in data:
             self.controls_desc['humidity'] =     { 'value' : 0,
                                                    'meta' :  { 'type' : 'rel_humidity',
                                                              },
+                                                   'readonly' : True,
                                                  }
 
 
@@ -137,15 +145,12 @@ class OregonRxDevice(object):
 
 
     def handle_data(self, data):
-        print "\n" * 15
-        print "handle data!", data
-
         var = {}
 
         if 'temp' in data:
-            var['temperature'] = data['temp']
+            self.controls_desc['temperature']['value'] = data['temp']
         if 'humidity' in data:
-            var['humidity'] = data['humidity']
+            self.controls_desc['humidity']['value'] = data['humidity']
         return var
 
 
@@ -157,30 +162,26 @@ class OregonRxDevice(object):
 
 class NooliteRxDevice(object):
     device_room = None
+
     def __init__(self, addr, data = {}):
         self.addr = addr
         self.addr_hex = hex(self.addr)
 
 
-        self.device_id = "noolite_tx_" + self.addr_hex
+        self.device_id = "noolite_rx_" + self.addr_hex
 
 
         self.device_name = "Noolite Sensor %s " % (self.addr_hex)
 
         self.controls_desc = {}
 
-        if 'temp' in data:
-            self.controls_desc['temperature'] =   { 'value' : 0,
-                                                    'meta' :  { 'type' : 'temperature',
-                                                              },
-                                                  }
-        if 'humidity' in data:
-            self.controls_desc['humidity'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'rel_humidity',
-                                                             },
-                                                 }
+    def decode_level(self, level):
+        if level > 157:
+            level = 157
+        if level < 34:
+            level = 34
 
-
+        return int(round ((level - 34) / 1.23))
 
 
     def get_controls(self):
@@ -188,13 +189,72 @@ class NooliteRxDevice(object):
 
 
     def handle_data(self, data):
-        var = {}
-        if 'temp' in data:
-            var['temperature'] = data['temp']
-        if 'humidity' in data:
-            var['humidity'] = data['humidity']
+        if 'cmd' in data:
+            try:
+                cmd = int(data['cmd'])
+            except ValueError:
+                return
+        else:
+            return
 
-        return var
+
+        if 'temp' in data:
+            self.controls_desc['temperature'] =   { 'value' : data['temp'],
+                                                    'meta' :  { 'type' : 'temperature',
+                                                              },
+                                                    'readonly' : True,
+                                                  }
+
+        if 'humidity' in data:
+            self.controls_desc['humidity'] =     { 'value' : data['humidity'],
+                                                   'meta' :  { 'type' : 'rel_humidity',
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+
+
+
+        if cmd == NooliteCommands.SetLevel:
+            if 'level' in data:
+                try:
+                    level = int(data['level'])
+                except ValueError:
+                    return
+
+                self.controls_desc['level'] =     { 'value' : str(self.decode_level(level)),
+                                                       'meta' :  { 'type' : 'range',
+                                                                   'max' : 100,
+                                                                   'order' : '1',
+                                                                 },
+                                                       'readonly' : True,
+                                                   }
+        elif cmd in (NooliteCommands.On, NooliteCommands.Off, NooliteCommands.Switch):
+            self.controls_desc.setdefault('state',  { 'value' : 0,
+                                                       'meta': {  'type' : 'switch',
+                                                                  'order' : '2',
+                                                            },
+                                                       'readonly' : True,
+                                                      }, )
+            val = None
+            if cmd == NooliteCommands.On:
+                val = '1'
+            elif cmd == NooliteCommands.Off:
+                val = '0'
+            elif cmd == NooliteCommands.Switch:
+                cur_val = self.controls_desc['state']['value']
+                if cur_val == '1':
+                    val = '0'
+                else:
+                    val = '1'
+
+            if val is not None:
+                self.controls_desc['state']['value'] = val
+
+
+
+
+
+
 
 
 
@@ -203,27 +263,31 @@ class OregonRxHandler(object):
     def __init__(self):
         self.devices = {}
 
-    def get_device(self, data):
+    def handle_data(self, data):
         if ('code' in data) and  ('type' in data):
             channel = data.get('channel')
             key = (data['type'], data['code'], channel)
             if key not in self.devices:
                 self.devices[key] = OregonRxDevice(data['type'], data['code'], channel, data)
 
-            return self.devices[key]
+            device = self.devices[key]
+            device.handle_data(data)
+
+            return device
 
 class NooliteRxHandler(object):
     name = "noo"
     def __init__(self):
         self.devices = {}
 
-    def get_device(self, data):
-        if data.get('temp'):
-            if 'addr' in data:
-                key = data['addr']
-                if key not in self.devices:
-                    self.devices[key] = NooliteRxDevice(int(data['addr'], 16), data)
+    def handle_data(self, data):
+        if 'addr' in data:
+            key = data['addr']
+            if key not in self.devices:
+                self.devices[key] = NooliteRxDevice(int(data['addr'], 16), data)
+            device = self.devices[key]
+            device.handle_data(data)
 
-                return self.devices[key]
+            return device
 
 rx_handler_classes = (OregonRxHandler,NooliteRxHandler )

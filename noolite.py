@@ -47,6 +47,31 @@ def crc8_maxim(data):
     return crc
 
 
+class NooliteCommands(object):
+    # todo py3.4 enums
+
+    SetLevel = 6
+    On = 2
+    Off = 0
+    Switch = 4
+    Bind = 15
+    Unbind = 9
+    LoadPreset = 7
+    SavePreset = 8
+    StopReg = 10
+    RollColor = 16
+    SwitchColor = 17
+    SwitchMode = 18
+    SwitchSpeed = 19
+    SetColor = 6
+
+
+
+
+
+
+
+
 
 class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
     name = "noo"
@@ -54,6 +79,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         self.addr = None
         self.flip = 0
         self.getAddress()
+
+
 
     def getAddress(self):
         if self.addr is None:
@@ -99,9 +126,9 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         return crc8_maxim(data)
 
     def parsePacket(self, packet):
+        #~ print len(packet)
         if len(packet) < 38:
             return
-        #~ print len(packet)
         remainder =  (len(packet) - 6 ) % 4
         if remainder != 0:
             packet += '0'*(4-remainder)
@@ -166,7 +193,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         #~ if '000' in bitstream[2:]:
                 #~ print utils.manchester_decode(bitstream[2:][:bitstream[2:].index('000')])
 
-        #~ print len(bitstream)
 
 
 
@@ -225,7 +251,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                 kw['humidity'] =str(rel_humidity)
                 kw['lowbat'] = str(lowbat)
 
-
+            elif cmd == 6:
+                kw['level'] = str(args[0])
 
 
             #~ kw['crc'] = hex(crc)[2:]
