@@ -73,20 +73,41 @@ def manchester_encode(bitstream, inverted=False):
 
 
 
-def find_longest_match(pattern, s):
+def find_longest_match(pattern, s, align_left=False):
+	""" return longest match, aligned right by default"""
+	def _max_key(m):
+		length = m.end() - m.start()
+
+		if align_left:
+			align_key = -m.start()
+		else:
+			align_key = m.start()
+
+		return (length, align_key)
+
 	matches = list(re.finditer(pattern, s))
 	if matches:
-		match = max(matches, key=lambda m: (m.end() - m.start()))
+		match = max(matches, key=_max_key)
 		return match
 	else:
 		return None
 
 
 def strip_tail(bitstream, zero_bits=10, one_bits=10, ignore_bits=0):
-	match = find_longest_match('0+.{0,%d}1+' % ignore_bits , bitstream)
+	#~ print "strip_tail", bitstream
+	match = find_longest_match('0{%d,}.{0,%d}1{%d,}' % (zero_bits, ignore_bits, one_bits) , bitstream)
 	if match:
 		return bitstream[:match.start()]
 	return bitstream
+
+def strip_to_pause(bitstream, zero_bits=20):
+	""" Strip to first sequence of N zeroes"""
+	index = bitstream.find('0' * zero_bits)
+	if index > -1:
+		return bitstream[:index]
+	else:
+		return bitstream
+
 
 def strip_preamble(bitstream, ignore_bits=5):
 	match = re.match('^.{0,%d}((?:10)+)|((?:01)+)' % ignore_bits, bitstream)

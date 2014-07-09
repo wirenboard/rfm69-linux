@@ -186,10 +186,13 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         bitstream = utils.get_bits(data)
         #~ print bitstream, len(bitstream)
         bitstream = utils.strip_preamble(bitstream)
-        bitstream = utils.strip_tail(bitstream, ignore_bits=4)
-        #~ print bitstream, len(bitstream)
+
+
+        bitstream = utils.strip_to_pause(bitstream, zero_bits = 8 * 3)
 
         #~ print bitstream, len(bitstream)
+
+        #~ print "bitstream=",  bitstream, len(bitstream)
         #~ if '000' in bitstream[2:]:
                 #~ print utils.manchester_decode(bitstream[2:][:bitstream[2:].index('000')])
 
