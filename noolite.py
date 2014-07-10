@@ -185,7 +185,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
     def tryDecode(self, data):
         bitstream = utils.get_bits(data)
         #~ print bitstream, len(bitstream)
-        bitstream = utils.strip_preamble(bitstream)
+        bitstream = utils.strip_preamble(bitstream, ignore_bits=30)
 
 
         bitstream = utils.strip_to_pause(bitstream, zero_bits = 8 * 3)
@@ -202,8 +202,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         parts = bitstream.rsplit('000')
         if parts[0] == '':
             parts = parts[1:]
-        if len(parts) != 2:
-            return
+        #~ if len(parts) != 2:
+            #~ return
 
         for part in parts:
             first_copy = part

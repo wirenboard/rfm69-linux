@@ -109,9 +109,14 @@ def strip_to_pause(bitstream, zero_bits=20):
 		return bitstream
 
 
-def strip_preamble(bitstream, ignore_bits=5):
-	match = re.match('^.{0,%d}((?:10)+)|((?:01)+)' % ignore_bits, bitstream)
+def strip_preamble(bitstream, ignore_bits=5, min_length =1):
+	""" min_length - preamble length in 01 transitions"""
+
+	#~ print "strip_preamble:", bitstream
+	#~ match = find_longest_match('^.{0,%d}((?:10){%d,})|((?:01){%d,})' % (ignore_bits, min_length, min_length), bitstream)
+	match = re.match('^.{0,%d}((?:10){%d,})|((?:01){%d,})' % (ignore_bits, min_length, min_length), bitstream)
 	if match:
+		#~ print "stripped: ", bitstream[:match.end()]
 		return bitstream[match.end():]
 
 	return bitstream
