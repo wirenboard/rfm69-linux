@@ -275,6 +275,10 @@ class OregonRxHandler(object):
 
             return device
 
+class OregonV3RxHandler(OregonRxHandler):
+	name = "oregon3"
+
+
 class NooliteRxHandler(object):
     name = "noo"
     def __init__(self):
@@ -290,4 +294,4 @@ class NooliteRxHandler(object):
 
             return device
 
-rx_handler_classes = (OregonRxHandler,NooliteRxHandler )
+rx_handler_classes = (OregonRxHandler, OregonV3RxHandler, NooliteRxHandler )

@@ -28,9 +28,9 @@ radio = None
 
 from protocols import RawProtocolHandler
 from noolite import NooliteProtocolHandler
-from oregon import OregonV2ProtocolHandler
+from oregon import OregonV2ProtocolHandler, OregonV3ProtocolHandler
 
-protocol_handlers = [RawProtocolHandler(), NooliteProtocolHandler(), OregonV2ProtocolHandler()]
+protocol_handlers = [RawProtocolHandler(), NooliteProtocolHandler(), OregonV2ProtocolHandler(), OregonV3ProtocolHandler()]
 
 
 
