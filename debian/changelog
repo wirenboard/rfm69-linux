@@ -1,3 +1,11 @@
+wb-homa-ism-radio (1.09) UNRELEASED; urgency=medium
+
+  * Oregon Scientfic V3, noolite improvements.
+  * Add support for noolite remotes 
+  * -- 
+
+ -- Evgeny Boger <boger@contactless.ru>  Thu, 10 Jul 2014 19:46:33 +0400
+
 wb-homa-ism-radio (1.08) stable; urgency=medium
 
   * Preliminary support for Noolite PT111 thermo-hygro sensor
