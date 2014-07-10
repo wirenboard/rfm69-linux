@@ -148,7 +148,9 @@ class OregonV2ProtocolHandler(OregonV2V3ProtocolDecoder, protocols.BaseRCProtoco
 
         bitstream = utils.get_bits(data)
         #~ print "before strip tail", bitstream
-        bitstream = utils.strip_tail(bitstream, ignore_bits=3)
+        #~ bitstream = utils.strip_tail(bitstream, ignore_bits=3)
+        bitstream = utils.strip_to_pause(bitstream, zero_bits = 8 * 3)
+
         #~ print "aft strip tail", bitstream
         slips, bitsream_dec_1 = utils.manchester_decode_ext(bitstream)
         #~ print bitsream_dec_1
