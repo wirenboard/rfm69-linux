@@ -2,15 +2,16 @@ import unittest
 import binascii
 
 import noolite
+import oregon
 import utils
 
 
 to_bytes = lambda s: [ord(x) for x in binascii.unhexlify(s)]
-class TestNoolite(unittest.TestCase):
 
+
+class ProtocolTestCase(unittest.TestCase):
     def setUp(self):
-        self.handler = noolite.NooliteProtocolHandler()
-
+        self.handler = self.HandlerClass()
     def decode(self, raw):
         return self.handler.tryDecode(
             to_bytes(raw)
@@ -25,6 +26,8 @@ class TestNoolite(unittest.TestCase):
         for k, v in expected_vars.iteritems():
             self.assertEqual(ans.get(k), v, "expected %s=%s, got %s" %(k, v, ans.get(k)))
 
+class TestNoolite(ProtocolTestCase):
+    HandlerClass = noolite.NooliteProtocolHandler
 
 
 
@@ -36,10 +39,10 @@ class TestNoolite(unittest.TestCase):
                           'addr=149f    cmd=21  flip=1  fmt=7 temp=28.0 lowbat=0 humidity=58')
 
         self.check_decode('aaaaaaaaaaaaaaa85666a65969a9aa6aa55555569a66a56aaaa590accd4cb2d35354d54aaaaaad34cd4ad5554b200000000000000001fffffc7fffe0',
-                          'addr=149f	temp=62.1	lowbat=0	fmt=7	cmd=21	flip=1 	humidity=4')
+                          'addr=149f    temp=62.1   lowbat=0    fmt=7   cmd=21  flip=1  humidity=4')
 
         self.check_decode('aaaaaaaaaaaaa1599a9a96a6a665aa9555555a699a95aaaaa542b335352d4d4ccb552aaaaab4d3352b55554a8000000000000000000ffff87fffffff',
-                          'addr=149f	temp=56.1	lowbat=1	fmt=7	cmd=21	flip=1 	humidity=6')
+                          'addr=149f    temp=56.1   lowbat=1    fmt=7   cmd=21  flip=1  humidity=6')
 
 
 
@@ -47,7 +50,7 @@ class TestNoolite(unittest.TestCase):
     def test_rgb(self):
         self.check_decode('aaaaaaaaaaaaaaa8596a5aa9a9aa59aaaaa6955669a5aaaaa6a0b2d4b5535354b355554d2aacd34b55554d4000000000000000000000200fffffffff',
                           'addr=25f9 cmd=6 flip=1 fmt=3')
-
+#~
         self.check_decode('34b55532b41a5a96aa6a6a966aaaa9a5559a696aaa65680000000000000000000000000bffffffffffffffffffffffffffffffffffffffffffffffff',
                           'addr=25f9 cmd=6 flip=0 fmt=3')
 
@@ -60,24 +63,37 @@ class TestNoolite(unittest.TestCase):
 
     def test_on_ch(self):
         self.check_decode('aaaaaaaaaaaaaaa859aa555669aaaaaa6960b354aaacd3555554d2c0000000000000000000000017fffffffe3fff87f0fffffffffffffffff8ffffff',
-                          'fmt=0	cmd=2	flip=1	addr=25fc')
+                          'fmt=0    cmd=2   flip=1  addr=25fc')
 
         self.check_decode('aaaaaaaaaaaaaaa869aa555669aaaaaa9560d354aaacd35555552ac0000000000000000000000013fffffffffff3a73ffcffffffffffffffffffff0f',
-                          'fmt=0	cmd=2	flip=0	addr=25fc')
+                          'fmt=0    cmd=2   flip=0  addr=25fc')
+
+
+
 
     def test_set_level(self):
 
         self.check_decode('aaaaaaaaaaaaaaa859665696555669a6aaa95990b2ccad2caaacd34d5552b320000000000000000000000001ffffffe7f81ff80fffffc07ffffffc0f',
-                          'fmt=1	cmd=6	flip=1	addr=25fd')
+                          'fmt=1    cmd=6   flip=1  addr=25fd')
         self.check_decode('aaaaaaaaaaaaaaaaa869665696555669a6aaaaa690d2ccad2caaacd34d55554d20000000000000000000000087ffffffffe07fffffffffffffffffff',
-                          'fmt=1	cmd=6	flip=0	addr=25fd')
+                          'fmt=1    cmd=6   flip=0  addr=25fd')
 
 
+    def test_noise_at_the_end(self):
+        self.check_decode('aaaaaaaaaaaaaaa859aa955669aaaaa99550b3552aacd35555532aa0000000000000000000000000fe38ffff8fffffffffffffffffffffffffffffff',
+                            'addr=25f8  cmd=2 flip=1 fmt=0')
 
+    def test_shifted_start(self):
+            self.check_decode('fffffd5555555555555555550d4d52aacd3555552cac1a9aa5559a6aaaaa5958000000000000000000000001ffffffbffffbf17fffffffffffffffff',
+                                'addr=25f8 cmd=4 fmt=0 flip=0')
 
+class TestOregonV2(ProtocolTestCase):
+    HandlerClass = oregon.OregonV2ProtocolHandler
 
-        #~ self.check_decode('',
-                          #~ '')
+    def test_temp_hygro(self):
+		#thgn132n
+		self.check_decode('666666666666669696699969669699999999699999669699696699966996999999696966999996966666999999669600000003fff0bffffffcffffff',
+					      'code=b0	temp=26.3	humidity=35	type=1a2d	channel=4')
 
 if __name__ == '__main__':
     unittest.main()
