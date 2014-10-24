@@ -333,8 +333,9 @@ class MQTTHandler(object):
 
             if rx_device is not None:
                 if rx_device not in self.rx_devices:
-                    self.rx_devices.append(rx_device)
-                    self.publish_device(rx_device)
+                    if rx_device.get_controls():
+                        self.rx_devices.append(rx_device)
+                        self.publish_device(rx_device)
                 self.publish_device_controls(rx_device)
 
 #~
