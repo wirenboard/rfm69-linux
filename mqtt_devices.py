@@ -1,5 +1,5 @@
 from noolite import NooliteProtocolHandler, NooliteCommands
-
+from random import randint
 
 
 class NooliteTxDevice(object):
@@ -45,6 +45,12 @@ class NooliteTxDevice(object):
                                        'export' : '0',
                                     },
                           },
+                'loadpreset'  : { 'value' : 0,
+                            'meta': {  'type' : 'pushbutton',
+                                       'order' : '7',
+                                },
+                          },
+
               }
 
         self.protocol_handler = NooliteProtocolHandler()
@@ -88,7 +94,10 @@ class NooliteTxDevice(object):
             var['cmd'] = NooliteCommands.SetLevel
 
             var['arg'] = str(self.encode_level(int(value)))
+        elif control == 'loadpreset':
+            var['cmd'] = NooliteCommands.LoadPreset
         else:
+
             print "unknown control "
             return
 
@@ -212,8 +221,6 @@ class NooliteRxDevice(object):
                                                    'readonly' : True,
                                                  }
 
-
-
         if cmd == NooliteCommands.SetLevel:
             if 'level' in data:
                 try:
@@ -250,6 +257,15 @@ class NooliteRxDevice(object):
             if val is not None:
                 self.controls_desc['state']['value'] = val
 
+        elif cmd == NooliteCommands.LoadPreset:
+            self.controls_desc.setdefault('state',  { 'value' : 0,
+                                                      'meta': {  'type' : 'switch',
+                                                                 'order' : '2',
+                                                            },
+                                                      'readonly' : True,
+                                                     }, )
+            
+            self.controls_desc['state']['value'] = randint(1, 65000)
 
 
 
