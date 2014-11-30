@@ -64,6 +64,10 @@ class NooliteCommands(object):
     SwitchMode = 18
     SwitchSpeed = 19
     SetColor = 6
+    SlowDown = 1
+    SlowUp = 3
+    SlowSwitch = 5
+    SlowStop = 10
 
 
 

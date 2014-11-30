@@ -45,6 +45,26 @@ class NooliteTxDevice(object):
                                        'export' : '0',
                                     },
                           },
+				'slowup'  : { 'value' : 0,
+                            'meta': {  'type' : 'pushbutton',
+                                       'order' : '7',
+                                    },
+                          },
+				'slowdown'  : { 'value' : 0,
+                            'meta': {  'type' : 'pushbutton',
+                                       'order' : '8',
+                                    },
+                          },
+				'slowswitch'  : { 'value' : 0,
+                            'meta': {  'type' : 'pushbutton',
+                                       'order' : '9',
+                                    },
+                          },
+				'slowstop'  : { 'value' : 0,
+                            'meta': {  'type' : 'pushbutton',
+                                       'order' : '10',
+                                    },
+                          },
               }
 
         self.protocol_handler = NooliteProtocolHandler()
@@ -88,6 +108,19 @@ class NooliteTxDevice(object):
             var['cmd'] = NooliteCommands.SetLevel
 
             var['arg'] = str(self.encode_level(int(value)))
+        
+        elif control == 'slowup':
+            var['cmd'] = NooliteCommands.SlowUp
+			
+        elif control == 'slowdown':
+            var['cmd'] = NooliteCommands.SlowDown
+
+        elif control == 'slowswitch':
+            var['cmd'] = NooliteCommands.SlowSwitch
+
+        elif control == 'slowstop':
+            var['cmd'] = NooliteCommands.SlowStop
+
         else:
             print "unknown control "
             return
