@@ -54,7 +54,7 @@ class NooliteTxDevice(object):
         return self.controls_desc
 
     def encode_level(self, level):
-        if level < 0:
+        if level <= 0:
             return 0
         else:
             return int(round((100 if (level > 100) else level) * 1.23 + 34))
