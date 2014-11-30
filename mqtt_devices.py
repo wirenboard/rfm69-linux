@@ -33,15 +33,21 @@ class NooliteTxDevice(object):
 
                                     },
                           },
+                'color'  : { 'value' : '0;0;0',
+                            'meta': {  'type' : 'rgb' ,
+                                       'order' : '5',
+
+                                    },
+                          },
                 'bind'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton',
-                                       'order' : '5',
+                                       'order' : '6',
                                        'export' : '0',
                                     },
                           },
                 'unbind'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton',
-                                       'order' : '6',
+                                       'order' : '7',
                                        'export' : '0',
                                     },
                           },
@@ -54,7 +60,7 @@ class NooliteTxDevice(object):
         return self.controls_desc
 
     def encode_level(self, level):
-        if level < 0:
+        if level <= 0:
             return 0
         else:
             return int(round((100 if (level > 100) else level) * 1.23 + 34))
@@ -88,6 +94,19 @@ class NooliteTxDevice(object):
             var['cmd'] = NooliteCommands.SetLevel
 
             var['arg'] = str(self.encode_level(int(value)))
+        elif control == 'color':
+            var['cmd'] = NooliteCommands.SetColor
+
+            try:
+                values = value.strip().split(';')
+                assert len(values) == 3
+                values = tuple(int(v) for v in values)
+                var['args'] = "%d;%d;%d" % values
+            except:
+                print "error decoding color"
+                import traceback
+                traceback.print_exc()
+                return
         else:
             print "unknown control "
             return

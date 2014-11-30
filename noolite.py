@@ -283,9 +283,19 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
             cmd = int(kw['cmd'])
 
+            if 'args' in kw:
+                try:
+                    args_str = kw['args'].split(';')
+                    args = [int(arg) for arg in args]
+                except:
+                    pass
+
             if cmd == 6:
                 fmt = 1
                 args = [ int(kw['arg']) ]
+            elif cmd == NooliteCommands.SetColor:
+                args.append(0)
+                fmt = 3
 
             if 'crc' in kw:
                 crc = int(kw['crc'])
@@ -345,7 +355,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
 #
 # temp/hum:
-#     flip, 2 bit -->    10     10101000 11100000 10000101 00100110 11111111 11111001 00101000 11100000 00111000
+#     flip, 2 bit -->    10 10101000 11100000 10000101 00100110 11111111 11111001 00101000 11100000 00111000
 #     cmd 8 bit              ---^    |           | ^ ^    ^        ^     addr_lo  addr_hi    fmt      crc
 #     temperature, signed, 0.1C  --> |-- 12 bit -| | |    |        |
 #     unknown, 3bit, 0b010  ------->---------------- |    |        |
