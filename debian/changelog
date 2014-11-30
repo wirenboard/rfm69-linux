@@ -1,3 +1,10 @@
+wb-homa-ism-radio (1.10) stable; urgency=medium
+
+  * Add support for slow down, slow up,  slow switch, slow stop commands for nooLite.
+  * Switch off nooLite devices on level=0
+
+ -- Evgeny Boger <boger@contactless.ru>  Sun, 30 Nov 2014 04:46:12 +0300
+
 wb-homa-ism-radio (1.09+1) stable; urgency=medium
 
   * Do not publish empty devices
