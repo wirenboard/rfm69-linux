@@ -51,6 +51,8 @@ RF69_MODE_RX     =     3 # RX MODE
 RF69_MODE_TX	=	      4 # TX MODE
 
 
+COURSE_TEMP_COEF = 165 # puts the temperature reading in the ballpark, user can fine tune the returned value
+
 from threading import Event
 
 class RFM69(object):
@@ -351,6 +353,20 @@ class RFM69(object):
 		sensitivity = -threshold_dbm * 2
 		assert 0 <= sensitivity <= 0xFF
 		self.writeReg( REG_RSSITHRESH, sensitivity)
+
+
+	def readTemperature(self, cal_factor):
+		"""returns centigrade"""
+
+		self.setMode(RF69_MODE_STANDBY)
+		self.writeReg(REG_TEMP1, RF_TEMP1_MEAS_START);
+		while ((self.readReg(REG_TEMP1) & RF_TEMP1_MEAS_RUNNING)):
+			print '*'
+
+		return ~self.readReg(REG_TEMP2) + COURSE_TEMP_COEF + cal_factor # 'complement'corrects the slope, rising temp = rising val
+		#COURSE_TEMP_COEF puts reading in the ballpark, user can add additional correction
+
+
 
 	def config(self):
 		self.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY )
