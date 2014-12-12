@@ -95,7 +95,7 @@ class NooliteTxDevice(object):
 
             var['arg'] = str(self.encode_level(int(value)))
         elif control == 'color':
-            var['cmd'] = NooliteCommands.SetColor
+            var['cmd'] = NooliteCommands.SetLevel
 
             try:
                 values = value.strip().split(';')
