@@ -268,8 +268,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             return kw
 
     def tryEncode(self, kw):
-
-        print kw
         if 'raw' in kw:
             packet = kw['raw']
         else:
@@ -296,7 +294,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                     pass
 
             if cmd == NooliteCommands.SetLevel:
-                print "args=", args
                 if args:
                     # set level
                     args.append(0)
@@ -322,7 +319,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             elif fmt == 3:
                 assert len(args) == 4
                 args_data = "".join(bin(args[i])[2:].zfill(8)[::-1] for i in xrange(4))
-                print args, args_data
 
             packet = "".join(( '1',
                                 str(self.flip),
