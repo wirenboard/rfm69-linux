@@ -33,15 +33,21 @@ class NooliteTxDevice(object):
 
                                     },
                           },
+                'color'  : { 'value' : '0;0;0',
+                            'meta': {  'type' : 'rgb' ,
+                                       'order' : '5',
+
+                                    },
+                          },
                 'bind'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton',
-                                       'order' : '5',
+                                       'order' : '6',
                                        'export' : '0',
                                     },
                           },
                 'unbind'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton',
-                                       'order' : '6',
+                                       'order' : '7',
                                        'export' : '0',
                                     },
                           },
@@ -108,10 +114,9 @@ class NooliteTxDevice(object):
             var['cmd'] = NooliteCommands.SetLevel
 
             var['arg'] = str(self.encode_level(int(value)))
-        
         elif control == 'slowup':
             var['cmd'] = NooliteCommands.SlowUp
-			
+
         elif control == 'slowdown':
             var['cmd'] = NooliteCommands.SlowDown
 
@@ -121,6 +126,19 @@ class NooliteTxDevice(object):
         elif control == 'slowstop':
             var['cmd'] = NooliteCommands.SlowStop
 
+        elif control == 'color':
+            var['cmd'] = NooliteCommands.SetLevel
+
+            try:
+                values = value.strip().split(';')
+                assert len(values) == 3
+                values = tuple(int(v) for v in values)
+                var['args'] = "%d;%d;%d" % values
+            except:
+                print "error decoding color"
+                import traceback
+                traceback.print_exc()
+                return
         else:
             print "unknown control "
             return

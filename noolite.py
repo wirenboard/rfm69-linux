@@ -63,7 +63,6 @@ class NooliteCommands(object):
     SwitchColor = 17
     SwitchMode = 18
     SwitchSpeed = 19
-    SetColor = 6
     SlowDown = 1
     SlowUp = 3
     SlowSwitch = 5
@@ -269,6 +268,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             return kw
 
     def tryEncode(self, kw):
+
+        print kw
         if 'raw' in kw:
             packet = kw['raw']
         else:
@@ -287,9 +288,23 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
             cmd = int(kw['cmd'])
 
-            if cmd == 6:
-                fmt = 1
-                args = [ int(kw['arg']) ]
+            if 'args' in kw:
+                try:
+                    args_str = kw['args'].split(';')
+                    args = [int(arg) for arg in args_str]
+                except:
+                    pass
+
+            if cmd == NooliteCommands.SetLevel:
+                print "args=", args
+                if args:
+                    # set level
+                    args.append(0)
+                    fmt = 3
+                else:
+                    fmt = 1
+                    args = [ int(kw['arg']) ]
+
 
             if 'crc' in kw:
                 crc = int(kw['crc'])
@@ -306,7 +321,8 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                 args_data = bin(args[0])[2:].zfill(4)[::-1],
             elif fmt == 3:
                 assert len(args) == 4
-                args_data = "".join(bin(args[i])[2:].zfill(9)[::-1] for i in xrange(4))
+                args_data = "".join(bin(args[i])[2:].zfill(8)[::-1] for i in xrange(4))
+                print args, args_data
 
             packet = "".join(( '1',
                                 str(self.flip),
@@ -317,7 +333,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                                 bin(fmt)[2:].zfill(8)[::-1],
                                 bin(crc)[2:].zfill(8)[::-1] ))
 
-        #~ print "packet: ", packet
+        print "packet: ", packet
 
 
 
@@ -333,6 +349,11 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
         data = utils.get_bytes(bitstream)
         #~ print data
+
+        #~ print "decode:"
+        #~ print self.tryDecode(data)
+
+
         return data
 
 #ch:2 r:1 g:1 b:1        110110          10000000 10000000 10000000 00000000 10011111 10100100 11000000 11001011  fmt=3
@@ -349,7 +370,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
 #
 # temp/hum:
-#     flip, 2 bit -->    10     10101000 11100000 10000101 00100110 11111111 11111001 00101000 11100000 00111000
+#     flip, 2 bit -->    10 10101000 11100000 10000101 00100110 11111111 11111001 00101000 11100000 00111000
 #     cmd 8 bit              ---^    |           | ^ ^    ^        ^     addr_lo  addr_hi    fmt      crc
 #     temperature, signed, 0.1C  --> |-- 12 bit -| | |    |        |
 #     unknown, 3bit, 0b010  ------->---------------- |    |        |
