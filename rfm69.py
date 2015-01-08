@@ -288,9 +288,13 @@ class RFM69(object):
 		#	/* no need to wait for transmit mode to be ready since its handled by the radio */
 			self.setMode(RF69_MODE_TX);
 
-
-			GPIO.wait_for_edge(self.irq_gpio, GPIO.RISING)
-			#~ print GPIO.input(self.irq_gpio)
+			#~ print "sendFrame: waiting for irq"
+			status = GPIO.wait_for_edge(self.irq_gpio, GPIO.RISING, timeout = 0.6)
+			if status:
+				#~ print "sendFrame: got irq RISING edge"
+				pass
+			else:
+				print "error: no irq detected. going back to standby mode"
 
 			self.setStandby()
 

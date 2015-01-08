@@ -82,17 +82,21 @@ class GPIOHandler(object):
             self.epoll.unregister(self.gpio_fds[gpio])
 
 
-    def wait_for_edge(self, gpio, edge):
+    def wait_for_edge(self, gpio, edge, timeout=None):
+        if timeout == None:
+            timeout = 1E100
+
         event = threading.Event()
         event.clear()
         callback = lambda x: event.set()
 
         self.add_event_detect(gpio, edge, callback)
         #~ print "wait for edge..."
-        event.wait(1E100)
+        ret = event.wait(timeout)
         #~ print "wait for edge done"
         self.remove_event_detect(gpio)
 
+        return ret
 
 
     #~ self.irq_gpio, GPIO.RISING, callback=self.interruptHandler)
