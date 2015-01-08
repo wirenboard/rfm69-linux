@@ -1,4 +1,22 @@
 import re
+import Queue
+class BoundedQueue(Queue.Queue):
+    """ Queue with put_discard method """
+
+    def put_discard(self, item):
+        """ discard the least recent item until free slot is available"""
+
+        while True:
+            try:
+                self.put_nowait(item)
+            except Queue.Full:
+                try:
+                    self.get_nowait()
+                except Queue.Empty:
+                    pass
+            else:
+                break
+
 
 def batch_gen(data, batch_size, align_right = False):
 	if align_right:
@@ -22,6 +40,8 @@ def get_bits(data):
 def get_bytes(bitstream):
 	data = []
 	for chunk in batch_gen(bitstream, 8):
+		if isinstance(chunk, list):
+			chunk = "".join(chunk)
 		data.append( int(chunk, 2))
 	return data
 
