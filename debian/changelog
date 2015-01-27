@@ -1,3 +1,10 @@
+wb-homa-ism-radio (1.11+20150127) stable; urgency=low
+
+  * Changed Oregon support. Thanks to hamster
+  * Publish every received value, not only changes.
+
+ -- Sergey Butenin <s.butenin@gmail.com>  Mon, 26 Jan 2015 23:07:36 +0300
+
 wb-homa-ism-radio (1.11) stable; urgency=medium
 
   * Add support for Noolite RGB LED dimmer (SD111-180)
