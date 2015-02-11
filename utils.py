@@ -42,6 +42,8 @@ def get_bytes(bitstream):
 	for chunk in batch_gen(bitstream, 8):
 		if isinstance(chunk, list):
 			chunk = "".join(chunk)
+		if len(chunk) < 8:
+			chunk = chunk + '0' * (8 - len(chunk))
 		data.append( int(chunk, 2))
 	return data
 
