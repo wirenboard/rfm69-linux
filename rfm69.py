@@ -370,11 +370,31 @@ class RFM69(object):
 		return ~self.readReg(REG_TEMP2) + COURSE_TEMP_COEF + cal_factor # 'complement'corrects the slope, rising temp = rising val
 		#COURSE_TEMP_COEF puts reading in the ballpark, user can add additional correction
 
+	def setDataMode(self, packet=True, bitsync=True):
+		if packet:
+			datamode = RF_DATAMODUL_DATAMODE_PACKET
+		else:
+			if bitsync:
+				datamode = RF_DATAMODUL_DATAMODE_CONTINUOUS
+			else:
+				datamode = RF_DATAMODUL_DATAMODE_CONTINUOUSNOBSYNC
+
+
+		self.writeReg( REG_DATAMODUL, datamode | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00 ) #no shaping
+
+	def setNoiseThreshold(self, threshold):
+		""" set noise threshold floor (in dBm) """
+		if not (0 <= threshold <= 0xFF):
+			raise RuntimeError("wrong threshold value %s", threshold)
+
+		self.writeReg(REG_OOKFIX, 20)
+
 
 
 	def config(self):
 		self.writeReg( REG_OPMODE, RF_OPMODE_SEQUENCER_ON | RF_OPMODE_LISTEN_OFF | RF_OPMODE_STANDBY )
-		self.writeReg( REG_DATAMODUL, RF_DATAMODUL_DATAMODE_PACKET | RF_DATAMODUL_MODULATIONTYPE_OOK | RF_DATAMODUL_MODULATIONSHAPING_00 ) #no shaping
+
+		self.setDataMode(packet=True)
 
 		self.writeReg( REG_FDEVMSB, RF_FDEVMSB_5000) #default:5khz, (FDEV + BitRate/2 <= 500Khz)
 		self.writeReg( REG_FDEVLSB, RF_FDEVLSB_5000)
