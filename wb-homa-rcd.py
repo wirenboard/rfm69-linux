@@ -290,7 +290,7 @@ class MQTTHandler(object):
         self.device_controls_cache[device.device_id] = copy.deepcopy(controls)
 
 
-        for control, desc in controls_diff.iteritems():
+        for control, desc in controls.iteritems():
             control_prefix = "/devices/%s/controls/%s" % (device.device_id, control)
             if 'value' in desc:
                 self.client.publish(control_prefix, desc['value'], 0, True)

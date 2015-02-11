@@ -178,16 +178,77 @@ class OregonRxDevice(object):
 
         if 'temp' in data:
             self.controls_desc['temperature'] =   { 'value' : 0,
-                                                    'meta' :  { 'type' : 'temperature',
+                                                    'meta' :  { 'type' : 'temperature', 'units' : 'grade celsius', 
                                                               },
                                                     'readonly' : True,
                                                   }
         if 'humidity' in data:
             self.controls_desc['humidity'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'rel_humidity',
+                                                   'meta' :  { 'type' : 'rel_humidity', 'units' : 'percent',
                                                              },
                                                    'readonly' : True,
                                                  }
+        if 'comfort' in data:
+            self.controls_desc['comfort'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'comfort', 'units' : 'feeling',
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'rainRate' in data:
+            self.controls_desc['rainRate'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'rainfall', 'units' : 'mm_per_hour',
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'rainTotal' in data:
+            self.controls_desc['rainTotal'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'rainfall_total', 'units' : 'mm',
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'UV' in data:
+            self.controls_desc['UV'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'ultraviolet', 'units' : 'relative index', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'windDir' in data:
+            self.controls_desc['windDir'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'wind_direction', 'units' : 'degree', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'windSpeed' in data:
+            self.controls_desc['windSpeed'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'wind_speed', 'units' : 'meters_per_second', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'windAvgSpeed' in data:
+            self.controls_desc['windAvgSpeed'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'wind_speed', 'units' : 'meters_per_second', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'pressure' in data:
+            self.controls_desc['pressure'] =     { 'value' : 0,
+                                                   'meta' :  { 'type' : 'atmospheric_pressure', 'units' : 'millibar', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'forecast' in data:
+            self.controls_desc['forecast'] =     { 'value' : 0,                    
+                                                   'meta' :  { 'type' : 'weather_forecast', 'units' : 'conditions', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+        if 'lowbat' in data:
+            self.controls_desc['lowbat'] =     { 'value' : 0,                    
+                                                   'meta' :  { 'type' : 'sensor_battery_low', 'units' : 'boolean', 
+                                                             },
+                                                   'readonly' : True,
+                                                 }
+
 
 
     def get_controls(self):
@@ -202,6 +263,26 @@ class OregonRxDevice(object):
             self.controls_desc['temperature']['value'] = data['temp']
         if 'humidity' in data:
             self.controls_desc['humidity']['value'] = data['humidity']
+        if 'comfort' in data:
+            self.controls_desc['comfort']['value'] = data['comfort']
+        if 'rainRate' in data:
+            self.controls_desc['rainRate']['value'] = data['rainRate']
+        if 'rainTotal' in data:
+            self.controls_desc['rainTotal']['value'] = data['rainTotal']
+        if 'UV' in data:
+            self.controls_desc['UV']['value'] = data['UV']
+        if 'windDir' in data:
+            self.controls_desc['windDir']['value'] = data['windDir']
+        if 'windSpeed' in data:
+            self.controls_desc['windSpeed']['value'] = data['windSpeed']
+        if 'windAvgSpeed' in data:
+            self.controls_desc['windAvgSpeed']['value'] = data['windAvgSpeed']
+        if 'pressure' in data:
+            self.controls_desc['pressure']['value'] = data['pressure']
+        if 'forecast' in data:
+            self.controls_desc['forecast']['value'] = data['forecast']
+        if 'lowbat' in data:
+            self.controls_desc['lowbat']['value'] = data['lowbat']
         return var
 
 

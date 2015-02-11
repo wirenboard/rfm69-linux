@@ -1,6 +1,6 @@
 wb-homa-ism-radio (1.12) stable; urgency=medium
 
-  * fix for rfm69 stuck in transmit mode 
+  * fix for rfm69 stuck in transmit mode
 
  -- Evgeny Boger <boger@contactless.ru>  Thu, 18 Dec 2014 22:16:38 +0300
 
@@ -26,8 +26,8 @@ wb-homa-ism-radio (1.09+1) stable; urgency=medium
 wb-homa-ism-radio (1.09) stable; urgency=medium
 
   * Oregon Scientfic V3, noolite improvements.
-  * Add support for noolite remotes 
-  * -- 
+  * Add support for noolite remotes
+  * --
 
  -- Evgeny Boger <boger@contactless.ru>  Thu, 10 Jul 2014 19:53:14 +0400
 
@@ -42,7 +42,7 @@ wb-homa-ism-radio (1.08) stable; urgency=medium
 wb-homa-ism-radio (1.07) stable; urgency=medium
 
   * Add support for temp-only Oregon Scientific sensors
-  * Decode Oregon Scientific messages even for unsupported sensors 
+  * Decode Oregon Scientific messages even for unsupported sensors
 
  -- Evgeny Boger <boger@contactless.ru>  Wed, 02 Jul 2014 09:45:23 +0400
 
@@ -63,13 +63,13 @@ wb-homa-ism-radio (1.05) stable; urgency=medium
 
 wb-homa-ism-radio (1.04) stable; urgency=medium
 
-  * Add support for oregon v2 thermo&gygro sensors 
+  * Add support for oregon v2 thermo&gygro sensors
 
  -- Evgeny Boger <boger@contactless.ru>  Sat, 07 Jun 2014 04:40:17 +0400
 
 wb-homa-ism-radio (1.03) stable; urgency=medium
 
-  * switch instead of on/off, noise filtering 
+  * switch instead of on/off, noise filtering
 
  -- Evgeny Boger <boger@contactless.ru>  Fri, 06 Jun 2014 04:47:07 +0400
 
@@ -81,7 +81,7 @@ wb-homa-ism-radio (1.02) stable; urgency=medium
 
 wb-homa-ism-radio (1.01) stable; urgency=medium
 
-  * fix initscript, do not export bind/unbind, some minor changes 
+  * fix initscript, do not export bind/unbind, some minor changes
 
  -- Evgeny Boger <boger@contactless.ru>  Thu, 05 Jun 2014 18:29:56 +0400
 
