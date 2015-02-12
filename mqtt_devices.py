@@ -208,7 +208,7 @@ class OregonRxDevice(object):
                                                  }
         if 'UV' in data:
             self.controls_desc['UV'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'value',
+                                                   'meta' :  { 'type' : 'text',
                                                              },
                                                    'readonly' : True,
                                                  }
