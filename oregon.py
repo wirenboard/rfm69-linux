@@ -112,37 +112,37 @@ class OregonV2V3ProtocolDecoder(object):
 
     def decode_rain(self, nibbles, start, kw) :
         if len(nibbles) - start >= 10:
-            rainRate = (nibbles[start+3]*10 + nibbles[start+2] + nibbles[start+1]*0.1 + nibbles[start]*0.01) * 25.4 # convert from inch/hour
-            rainTotal = (nibbles[start+9]*1000 + nibbles[start+8]*100 + nibbles[start+7]*10 + nibbles[start+6] + nibbles[start+5]*0.1 + nibbles[start+4] * 0.01) * 25.4
-            kw['rainRate'] = str(rainRate) # rainfall rate in mm/hour
-            kw['rainTotal'] = str(rainTotal) # total rainfall in mm			
+            rain_rate = (nibbles[start+3]*10 + nibbles[start+2] + nibbles[start+1]*0.1 + nibbles[start]*0.01) * 25.4 # convert from inch/hour
+            rain_total = (nibbles[start+9]*1000 + nibbles[start+8]*100 + nibbles[start+7]*10 + nibbles[start+6] + nibbles[start+5]*0.1 + nibbles[start+4] * 0.01) * 25.4
+            kw['rain_rate'] = str(rain_rate) # rainfall rate in mm/hour
+            kw['rain_total'] = str(rain_total) # total rainfall in mm
         else:
             kw['error'].append("rain block too short! ");
 
     def decode_rain2(self, nibbles, start, kw) :
         if len(nibbles) - start >= 8:
-            rainRate = nibbles[start+2] * 10 + nibbles[start+1] + nibbles[start] * 0.1            
-            rainTotal = nibbles[start+7] * 1000 + nibbles[start+6] * 100 + nibbles[start+5] * 10 + nibbles[start+4] + nibbles[start+3] * 0.1
-            kw['rainRate'] = str(rainRate) # rain rate in mm/hour
-            kw['rainTotal'] = str(rainTotal) # total rain in mm			
+            rain_rate = nibbles[start+2] * 10 + nibbles[start+1] + nibbles[start] * 0.1
+            rain_total = nibbles[start+7] * 1000 + nibbles[start+6] * 100 + nibbles[start+5] * 10 + nibbles[start+4] + nibbles[start+3] * 0.1
+            kw['rain_rate'] = str(rain_rate) # rain rate in mm/hour
+            kw['rain_total'] = str(rain_total) # total rain in mm
         else:
             kw['error'].append("rain2 block too short! ");
 
     def decode_UV(self, nibbles, start, kw) :
         if len(nibbles) - start >= 2:
             uv = nibbles[start+1]*10 + nibbles[start]
-            kw['UV'] = str(uv) # UV index
+            kw['uv'] = str(uv) # UV index
         else:
             kw['error'].append("UV block too short! ");
 
     def decode_wind(self, nibbles, start, kw) :
         if len(nibbles) - start >= 9:
-            kw['windDir'] = str(nibbles[start]*22.5) # limited to 16 discrete values
+            kw['wind_dir'] = str(nibbles[start]*22.5) # limited to 16 discrete values
 
             windSpeed = nibbles[start+5]*10 + nibbles[start+4] + nibbles[start+3]*0.1
             windAvgSpeed = nibbles[start+8]*10 + nibbles[start+7] + nibbles[start+6]*0.1
-            kw['windSpeed'] = str(windSpeed) # wind speed in m/s
-            kw['windAvgSpeed'] = str(windAvgSpeed) # average wind speed in m/s
+            kw['wind_speed'] = str(windSpeed) # wind speed in m/s
+            kw['wind_avg_speed'] = str(windAvgSpeed) # average wind speed in m/s
         else:
             kw['error'].append("wind block too short! ");
 
@@ -153,7 +153,7 @@ class OregonV2V3ProtocolDecoder(object):
             kw['forecast'] = "cloudy" if (nibbles[start+2] == 2) else ("rainy" if (nibbles[start+2] == 3) else ("partly cloudy" if (nibbles[start+2] == 6) else "sunny" if (nibbles[start+2] == 0xc) else hex(nibbles[start+2])))
         else:
             kw['error'].append("baro block too short! ")
-    
+
     ##################
     #
     #
@@ -195,7 +195,7 @@ class OregonV2V3ProtocolDecoder(object):
         sensor_type = ((nibbles[1] << 12)+(nibbles[2] << 8)+(nibbles[3] << 4) + nibbles[4])
         channel = nibbles[5]
         rolling_code = (nibbles[7] << 4) + nibbles[6]
-        status = nibbles[8] 
+        status = nibbles[8]
 
 #        print "sensor type: ", hex(sensor_type)[2:], "code: ", hex(rolling_code)[2:], " channel: ", str(channel), "status: ", hex(status)[2:]
 
@@ -261,10 +261,6 @@ class OregonV2V3ProtocolDecoder(object):
         else:
              kw['UNKN'] = 'Ok'
 
-        # capabilities = self.SENSOR_IDS.get(sensor_type, ())
-
-#        print "Returning: ", kw
-#        print "-----------------------"
         return kw
 
 
