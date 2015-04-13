@@ -208,6 +208,42 @@ class OregonRxDevice(object):
 
 
 
+class Cs5211RxDevice(object):
+    device_room = None
+    def __init__(self, addr, data = {}):
+        self.device_id = "cs5211_rx_tx_%s" % (addr)
+
+        self.device_type_name = "[%s]" % addr
+        self.device_name = "cs5211 Sensor %s" % ( addr)
+        self.controls_desc = {} 
+        if 'state' in data:
+            self.controls_desc['state'] =   { 'value' : data['state'],
+                                          'meta' :  { 'type' : 'switch',
+                                                    },
+                                          'readonly' : False,
+                                        }
+        else:
+            self.controls_desc['state'] =   { 'value' : 'off',
+                                          'meta' :  { 'type' : 'switch',
+                                                    },
+                                          'readonly' : False,
+                                        }
+
+
+
+    def get_controls(self):
+        return self.controls_desc
+
+    def handle_data(self, data):
+        var = {}
+        if 'state' in data:
+            self.controls_desc['state']['value'] = data['state']
+      
+        return var
+
+    def get_id(self):
+        return self.device_id
+
 
 
 
@@ -345,4 +381,20 @@ class NooliteRxHandler(object):
 
             return device
 
-rx_handler_classes = (OregonRxHandler, OregonV3RxHandler, NooliteRxHandler )
+class Cs5211RxHandler(object):
+    name = "cs5211"
+    def __init__(self):
+        self.devices = {}
+
+    def handle_data(self, data):
+        if 'addr' in data:
+            key = data['addr']
+            if key not in self.devices:
+                self.devices[key] = Cs5211RxDevice(data['addr'], data['state'])
+            device = self.devices[key]
+            device.handle_data(data)
+
+            return device
+
+
+rx_handler_classes = (OregonRxHandler, OregonV3RxHandler, NooliteRxHandler, Cs5211RxHandler )
