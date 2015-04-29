@@ -89,11 +89,14 @@ class RFM69(object):
 
 	def start(self):
 		with self.lock:
-			while 1:
+			for i in xrange(100):
 				self.writeReg(REG_SYNCVALUE1, 0xaa)
 				val = self.readReg(REG_SYNCVALUE1)
 				if val == 0xaa:
 					break
+				time.sleep(0.02)
+			else:
+				raise RuntimeError("RFM69 does not respond")
 
 			self.config()
 			self.setStandby()
