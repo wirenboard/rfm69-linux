@@ -1,3 +1,15 @@
+wb-homa-ism-radio (1.14) stable; urgency=medium
+
+  * raise error if RFM69 does not respond
+
+ -- Evgeny Boger <boger@contactless.ru>  Wed, 29 Apr 2015 19:34:07 +0300
+
+wb-homa-ism-radio (1.13) stable; urgency=medium
+
+  * Get parameters from wb_env
+
+ -- Evgeny Boger <boger@contactless.ru>  Fri, 24 Apr 2015 18:04:59 +0300
+
 wb-homa-ism-radio (1.12) stable; urgency=medium
 
   * fix for rfm69 stuck in transmit mode
