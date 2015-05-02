@@ -7,5 +7,5 @@ Build-Depends: debhelper (>= 9), pkg-config
 
 Package: wb-homa-ism-radio
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, mosquitto, python-wb-io
+Depends: ${shlibs:Depends}, ${misc:Depends}, mosquitto, python-wb-io (>= 1.2)
 Description: MQTT driver for WB HomA for RFM69 ISM radio
