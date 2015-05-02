@@ -1,1 +1,5 @@
 *.pyc
+debian/files
+debian/wb-homa-ism-radio.debhelper.log
+debian/wb-homa-ism-radio.substvars
+debian/wb-homa-ism-radio/
