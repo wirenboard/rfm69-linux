@@ -1,3 +1,11 @@
+wb-homa-ism-radio (1.15) stable; urgency=medium
+
+  * minor noolite refactoring
+  * require WB serial
+  * merge new oregon code
+
+ -- Evgeny Boger <boger@contactless.ru>  Sat, 02 May 2015 14:34:26 +0300
+
 wb-homa-ism-radio (1.14) stable; urgency=medium
 
   * raise error if RFM69 does not respond
