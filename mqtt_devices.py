@@ -190,33 +190,33 @@ class OregonRxDevice(object):
                                                  }
         if 'comfort' in data:
             self.controls_desc['comfort'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'text',
-                                                             },
-                                                   'readonly' : True,
+                                                  'meta' :  { 'type' : 'text',
+                                                            },
+                                                  'readonly' : True,
                                                  }
         if 'rain_rate' in data:
             self.controls_desc['rain_rate'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'rainfall',
-                                                             },
-                                                   'readonly' : True,
+                                                    'meta' :  { 'type' : 'rainfall',
+                                                              },
+                                                    'readonly' : True,
                                                  }
         if 'rain_total' in data:
             self.controls_desc['rain_total'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'value', 'units' : 'mm',
-                                                             },
-                                                   'readonly' : True,
+	                                                 'meta' :  { 'type' : 'value', 'units' : 'mm',
+	                                                           },
+	                                                 'readonly' : True,
                                                  }
         if 'UV' in data:
             self.controls_desc['UV'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'text',
-                                                             },
-                                                   'readonly' : True,
-                                                 }
+                                             'meta' :  { 'type' : 'text',
+                                                       },
+                                             'readonly' : True,
+                                           }
         if 'windDir' in data:
             self.controls_desc['wind_direction'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'value', 'units' : 'deg',
-                                                             },
-                                                   'readonly' : True,
+		                                                 'meta' :  { 'type' : 'value', 'units' : 'deg',
+		                                                           },
+		                                                 'readonly' : True,
                                                  }
         if 'windSpeed' in data:
             self.controls_desc['wind_speed'] =     { 'value' : 0,
@@ -238,15 +238,15 @@ class OregonRxDevice(object):
                                                  }
         if 'forecast' in data:
             self.controls_desc['weather_forecast'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'text',
-                                                             },
-                                                   'readonly' : True,
+		                                                   'meta' :  { 'type' : 'text',
+		                                                             },
+		                                                   'readonly' : True,
                                                  }
         if 'lowbat' in data:
             self.controls_desc['low_battery'] =     { 'value' : 0,
-                                                   'meta' :  { 'type' : 'switch', 'readonly' : '1',
-                                                             },
-                                                   'readonly' : True,
+	                                                  'meta' :  { 'type' : 'switch', 'readonly' : '1',
+	                                                            },
+	                                                  'readonly' : True,
                                                  }
 
 
