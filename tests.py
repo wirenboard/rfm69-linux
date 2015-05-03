@@ -19,7 +19,7 @@ class ProtocolTestCase(unittest.TestCase):
 
     def check_decode(self, raw, expected_str):
         ans = self.decode(raw)
-        #~ print ans
+        #~ print "=\n", ans,  expected_str
         self.assertFalse(ans is None)
 
         expected_vars = dict(kv_str.split('=', 1) for kv_str in expected_str.split())
@@ -93,11 +93,11 @@ class TestOregonV2(ProtocolTestCase):
     def test_temp_hygro(self):
         #thgn132n
         self.check_decode('666666666666669696699969669699999999699999669699696699966996999999696966999996966666999999669600000003fff0bffffffcffffff',
-                          'code=b0  temp=26.3   humidity=35 type=1a2d   channel=4')
+                          'code=b0  temp=26.3   humidity=35 type=1d20   channel=4')
 
     def test_noise_at_the_end(self):
         self.check_decode('666666666666669696699969669699999996996669966699699669696996999999669999699999666666996969996900000000000000003fbfffffdf',
-                          'channel=2 code=e7 humidity=43 temp=25.6 type=1a2d')
+                          'channel=2 code=e7 humidity=43 temp=25.6 type=1d20')
 
 class TestOregonV3(ProtocolTestCase):
     HandlerClass = oregon.OregonV3ProtocolHandler
@@ -106,22 +106,22 @@ class TestOregonV3(ProtocolTestCase):
 		# http://contactless.ru/forums/topic/%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0-%D0%B4%D0%B0%D1%82%D1%87%D0%B8%D0%BA%D0%BE%D0%B2-oregon-scientific-v3-0/
 
 		self.check_decode('aaaa66aa56655995a5a66559a9655596a556aa5969980000000000000000000bffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=27.4 type=fa28')
+						  'channel=1 code=b3 humidity=39 temp=27.4 type=f824 lowbat=0')
 
 		self.check_decode('aaa99aa95995665696999659a595565a955a9665995000000000000000000007ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.9 type=fa28')
+						  'channel=1 code=b3 humidity=39 temp=26.9 type=f824')
 		self.check_decode('aaaa66aa56655995a5a655a969655596a556aa59555400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.7 type=fa28')
+						  'channel=1 code=b3 humidity=39 temp=26.7 type=f824')
 
 		self.check_decode('aaaa66aa56655995a5a6556969655596a5566a59699400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.6 type=fa28')
+						  'channel=1 code=b3 humidity=39 temp=26.6 type=f824')
 
 		self.check_decode('aaa99aa95995665696995565a595565a955969659a900000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.4 type=fa28')
+						  'channel=1 code=b3 humidity=39 temp=26.4 type=f824')
 		self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=40 temp=26.3 type=fa28')
+						  'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
 		self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=40 temp=26.3 type=fa28')
+						  'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
 
 
 if __name__ == '__main__':
