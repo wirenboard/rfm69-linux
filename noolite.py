@@ -78,30 +78,9 @@ class NooliteCommands(object):
 
 class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
     name = "noo"
-    def __init__(self):
-        self.addr = None
+    def __init__(self, addr = 0x1234):
+        self.addr = addr
         self.flip = 0
-        self.getAddress()
-
-
-
-    def getAddress(self):
-        if self.addr is None:
-            # read mac
-            for iface in ('eth0', 'wlan0'):
-                mac_path = '/sys/class/net/%s/address' % iface
-                if os.path.exists(mac_path):
-                    try:
-                        parts = open(mac_path).read().strip().split(':')
-                        self.addr = (int(parts[-2], 16) << 8) + int(parts[-1], 16)
-                        print self.addr
-                        break
-                    except:
-                        pass
-
-
-        return self.addr
-
 
     def calcChecksum(self, flip_bit, cmd, addr, fmt = 0,  args=[]):
         #~ print "calcChecksum"

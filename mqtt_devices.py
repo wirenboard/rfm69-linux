@@ -3,6 +3,16 @@ from noolite import NooliteProtocolHandler, NooliteCommands
 
 
 class NooliteTxDevice(object):
+    STATELESS_COMMAND_MAP = {
+        'bind':  NooliteCommands.Bind,
+        'unbind': NooliteCommands.Unbind,
+        'switch': NooliteCommands.Switch,
+        'slowup': NooliteCommands.SlowUp,
+        'slowdown': NooliteCommands.SlowDown,
+        'slowswitch': NooliteCommands.SlowSwitch,
+        'slowstop': NooliteCommands.SlowStop,
+    }
+
     def __init__(self, addr, radio_send):
         self.addr = addr
         self.addr_hex = hex(self.addr)
@@ -87,7 +97,7 @@ class NooliteTxDevice(object):
 
 
 
-    def update_control(self, control, value):
+    def update_control(self, control, value, retained = False):
         self.flip = 0 if self.flip else 1
 
 
@@ -97,35 +107,15 @@ class NooliteTxDevice(object):
 
         var['arg'] = '0'
 
-        if control == 'bind':
-            var['cmd'] = NooliteCommands.Bind
-        elif control == 'unbind':
-            var['cmd'] = NooliteCommands.Unbind
-        elif control == 'state':
+        if control == 'state':
             if int(value):
                 var['cmd'] = NooliteCommands.On
             else:
                 var['cmd'] = NooliteCommands.Off
-
-        elif control == 'switch':
-            var['cmd'] = NooliteCommands.Switch
-
         elif control == 'level':
             var['cmd'] = NooliteCommands.SetLevel
 
             var['arg'] = str(self.encode_level(int(value)))
-        elif control == 'slowup':
-            var['cmd'] = NooliteCommands.SlowUp
-
-        elif control == 'slowdown':
-            var['cmd'] = NooliteCommands.SlowDown
-
-        elif control == 'slowswitch':
-            var['cmd'] = NooliteCommands.SlowSwitch
-
-        elif control == 'slowstop':
-            var['cmd'] = NooliteCommands.SlowStop
-
         elif control == 'color':
             var['cmd'] = NooliteCommands.SetLevel
 
@@ -139,9 +129,19 @@ class NooliteTxDevice(object):
                 import traceback
                 traceback.print_exc()
                 return
+
+        elif control in self.STATELESS_COMMAND_MAP.keys():
+            #~ print "stateless: ", control, retained
+            # do not send stateless commands on startup (not implemented)
+            #~ if retained:
+                #~ return
+
+            var['cmd'] = self.STATELESS_COMMAND_MAP[control]
+
         else:
             print "unknown control "
             return
+
 
 
         data = self.protocol_handler.tryEncode(var)

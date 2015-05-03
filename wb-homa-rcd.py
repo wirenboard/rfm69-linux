@@ -81,7 +81,7 @@ def get_serial():
     if os.path.exists(path):
         return open(path).read().strip()
     else:
-        return ":".join(hex(random.randint(0,255))[2:].zfill(2) for _ in xrange(6))
+        raise RuntimeError("/var/lib/wirenboard/serial.conf doesn't exist")
 
 
 import mqtt_devices
@@ -367,6 +367,9 @@ class MQTTHandler(object):
 
             device_id = parts[2]
             control = parts[4]
+
+
+
 
             for device in self.devices:
                 if device.device_id == device_id:
