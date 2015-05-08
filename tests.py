@@ -87,6 +87,23 @@ class TestNoolite(ProtocolTestCase):
             self.check_decode('fffffd5555555555555555550d4d52aacd3555552cac1a9aa5559a6aaaaa5958000000000000000000000001ffffffbffffbf17fffffffffffffffff',
                                 'addr=25f8 cmd=4 fmt=0 flip=0')
 
+    def test_cmd_25(self):
+        """Command_Temporary_On fmt==5 and fmt==6"""
+        self.check_decode('aaaaaaaaaaaaaaa86696a6aaaaaaa66aa9a9a96aaa9590cd2d4d5555554cd5535352d5552b219a5a9aaaaaaa99aaa6a6a5aaaa564000000000000000',
+                           'addr=2205 cmd=25 flip=0 fmt=6 timeout=5')
+
+        self.check_decode('aaaaaaaaaaaaaaa85696a9aaaaaaa66aa9a9a96aa6a960ad2d535555554cd5535352d54d52c15a5aa6aaaaaa99aaa6a6a5aa9aa58000000000000000',
+                           'addr=2205 cmd=25 flip=1 fmt=6 timeout=10')
+
+        self.check_decode('aaaaaaaaaaaaaaa15a5a96aa99aaa6a699aa959642b4b52d5533554d4d33552b2c85696a5aaa66aa9a9a66aa5659000000000000000000ffbfffffff',
+                           'addr=2205 cmd=25 flip=1 fmt=5 timeout=15')
+
+    def test_cmd_24(self):
+        """Command_Shadow_Set_Bright"""
+        self.check_decode('aaaaaaaaaaaaaaa85a96aa69666aa9a9a66aaa5960b52d54d2ccd553534cd554b2c16a5aa9a599aaa6a699aaa9658000000000000000000000000000',
+                          'addr=2205 cmd=24 flip=1 fmt=5 level=100')
+
+
 class TestOregonV2(ProtocolTestCase):
     HandlerClass = oregon.OregonV2ProtocolHandler
 
@@ -103,25 +120,25 @@ class TestOregonV3(ProtocolTestCase):
     HandlerClass = oregon.OregonV3ProtocolHandler
 
     def test_thgr800(self):
-		# http://contactless.ru/forums/topic/%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0-%D0%B4%D0%B0%D1%82%D1%87%D0%B8%D0%BA%D0%BE%D0%B2-oregon-scientific-v3-0/
+        # http://contactless.ru/forums/topic/%D0%BF%D0%BE%D0%B4%D0%B4%D0%B5%D1%80%D0%B6%D0%BA%D0%B0-%D0%B4%D0%B0%D1%82%D1%87%D0%B8%D0%BA%D0%BE%D0%B2-oregon-scientific-v3-0/
 
-		self.check_decode('aaaa66aa56655995a5a66559a9655596a556aa5969980000000000000000000bffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=27.4 type=f824 lowbat=0')
+        self.check_decode('aaaa66aa56655995a5a66559a9655596a556aa5969980000000000000000000bffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=39 temp=27.4 type=f824 lowbat=0')
 
-		self.check_decode('aaa99aa95995665696999659a595565a955a9665995000000000000000000007ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.9 type=f824')
-		self.check_decode('aaaa66aa56655995a5a655a969655596a556aa59555400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.7 type=f824')
+        self.check_decode('aaa99aa95995665696999659a595565a955a9665995000000000000000000007ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=39 temp=26.9 type=f824')
+        self.check_decode('aaaa66aa56655995a5a655a969655596a556aa59555400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=39 temp=26.7 type=f824')
 
-		self.check_decode('aaaa66aa56655995a5a6556969655596a5566a59699400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.6 type=f824')
+        self.check_decode('aaaa66aa56655995a5a6556969655596a5566a59699400000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=39 temp=26.6 type=f824')
 
-		self.check_decode('aaa99aa95995665696995565a595565a955969659a900000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=39 temp=26.4 type=f824')
-		self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
-		self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
-						  'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
+        self.check_decode('aaa99aa95995665696995565a595565a955969659a900000000000000000000fffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=39 temp=26.4 type=f824')
+        self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
+        self.check_decode('aaaa66aa56655995a5a655a5696555555956a55965a600000000000000000001ffffffffffffffffffffffffffffffffffffffffffffffffffffffff',
+                          'channel=1 code=b3 humidity=40 temp=26.3 type=f824')
 
 
 if __name__ == '__main__':

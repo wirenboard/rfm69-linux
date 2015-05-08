@@ -151,6 +151,12 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         elif fmt == 4:
             if len(args_data) != 0:
                return
+        elif fmt == 5:
+            if len(args_data) != 8:
+                return
+        elif fmt == 6:
+            if len(args_data) != 16:
+                return
         elif fmt == 7:
             if len(args_data) != 32:
                return
@@ -238,6 +244,15 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
             elif cmd == 6:
                 kw['level'] = str(args[0])
+            elif cmd == 24:
+                kw['level'] = str(args[0])
+            elif cmd == 25:
+                quanta = args[0]
+                if len(args) > 1:
+                    quanta += args[1] * 256
+
+                kw['timeout'] = str(quanta * 5)
+
 
 
             #~ kw['crc'] = hex(crc)[2:]
@@ -308,7 +323,7 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                                 bin(fmt)[2:].zfill(8)[::-1],
                                 bin(crc)[2:].zfill(8)[::-1] ))
 
-        print "packet: ", packet
+        #~ print "packet: ", packet
 
 
 
@@ -342,6 +357,14 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 #ch:2 lvl=46             110110                                     01110100 10011111 10100100 10000000 10010100  fmt=1
 #ch:2 cmd=10             110101                                              10011111 10100100 00000000 00010001  fmt=0
 #ch:2 off_ch             110000                                              10011111 10100100 00000000 10000100  fmt=0
+
+
+
+# новая команда [5:14:05 PM] : 24 на 5 канал установить яркость 100
+
+#                                       11 00011000 00100110 10100000 01000100 10100000 00110110 fmt=5
+# ch:5 cmd=25 timeout=(25*256+1)*5               11 10011000 10000000 10011000 10100000 01000100 01100000 00100001 fmt=6
+
 
 #
 # temp/hum:
