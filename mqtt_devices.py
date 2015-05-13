@@ -69,6 +69,12 @@ class NooliteTxDevice(object):
                                        'order' : '9',
                                     },
                           },
+                'shadow_level'  :  { 'value' : 0,
+                              'meta' :  { 'type' : 'range',
+                                          'order' : '10',
+                                          'max' : 100,
+                                        }
+                            },
                 'bind'  : { 'value' : 0,
                             'meta': {  'type' : 'pushbutton',
                                        'order' : '20',
@@ -114,8 +120,11 @@ class NooliteTxDevice(object):
                 var['cmd'] = NooliteCommands.Off
         elif control == 'level':
             var['cmd'] = NooliteCommands.SetLevel
-
             var['arg'] = str(self.encode_level(int(value)))
+        elif control == 'shadow_level':
+            var['cmd'] = NooliteCommands.ShadowSetBright
+            var['arg'] = str(self.encode_level(int(value)))
+
         elif control == 'color':
             var['cmd'] = NooliteCommands.SetLevel
 
@@ -202,9 +211,9 @@ class OregonRxDevice(object):
                                                  }
         if 'rain_total' in data:
             self.controls_desc['rain_total'] =     { 'value' : 0,
-	                                                 'meta' :  { 'type' : 'value', 'units' : 'mm',
-	                                                           },
-	                                                 'readonly' : True,
+                                                     'meta' :  { 'type' : 'value', 'units' : 'mm',
+                                                               },
+                                                     'readonly' : True,
                                                  }
         if 'UV' in data:
             self.controls_desc['UV'] =     { 'value' : 0,
@@ -214,9 +223,9 @@ class OregonRxDevice(object):
                                            }
         if 'windDir' in data:
             self.controls_desc['wind_direction'] =     { 'value' : 0,
-		                                                 'meta' :  { 'type' : 'value', 'units' : 'deg',
-		                                                           },
-		                                                 'readonly' : True,
+                                                         'meta' :  { 'type' : 'value', 'units' : 'deg',
+                                                                   },
+                                                         'readonly' : True,
                                                  }
         if 'windSpeed' in data:
             self.controls_desc['wind_speed'] =     { 'value' : 0,
@@ -238,15 +247,15 @@ class OregonRxDevice(object):
                                                  }
         if 'forecast' in data:
             self.controls_desc['weather_forecast'] =     { 'value' : 0,
-		                                                   'meta' :  { 'type' : 'text',
-		                                                             },
-		                                                   'readonly' : True,
+                                                           'meta' :  { 'type' : 'text',
+                                                                     },
+                                                           'readonly' : True,
                                                  }
         if 'lowbat' in data:
             self.controls_desc['low_battery'] =     { 'value' : 0,
-	                                                  'meta' :  { 'type' : 'switch', 'readonly' : '1',
-	                                                            },
-	                                                  'readonly' : True,
+                                                      'meta' :  { 'type' : 'switch', 'readonly' : '1',
+                                                                },
+                                                      'readonly' : True,
                                                  }
 
 
@@ -346,7 +355,7 @@ class NooliteRxDevice(object):
 
 
 
-        if cmd == NooliteCommands.SetLevel:
+        if cmd in (NooliteCommands.SetLevel, NooliteCommands.ShadowSetBright):
             if 'level' in data:
                 try:
                     level = int(data['level'])

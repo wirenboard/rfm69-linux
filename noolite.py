@@ -67,6 +67,9 @@ class NooliteCommands(object):
     SlowUp = 3
     SlowSwitch = 5
     SlowStop = 10
+    TemporaryOn = 25
+    ShadowSetBright = 24
+    ShadowLoadPreset = 23
 
 
 
@@ -244,9 +247,9 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
             elif cmd == 6:
                 kw['level'] = str(args[0])
-            elif cmd == 24:
+            elif cmd == NooliteCommands.ShadowSetBright:
                 kw['level'] = str(args[0])
-            elif cmd == 25:
+            elif cmd == NooliteCommands.TemporaryOn :
                 quanta = args[0]
                 if len(args) > 1:
                     quanta += args[1] * 256
@@ -295,6 +298,23 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                 else:
                     fmt = 1
                     args = [ int(kw['arg']) ]
+            elif cmd == NooliteCommands.ShadowSetBright:
+                args = [ int(kw['arg']) ]
+                fmt = 5
+
+
+            elif cmd == NooliteCommands.TemporaryOn:
+                timeout = int(kw['arg'])
+                if (timeout < 0) or (timeout > 65535):
+                    return
+
+                if timeout > 255:
+                    args = [timeout % 256, timeout / 256]
+                    fmt = 6
+                else:
+                    args = [timeout]
+                    fmt = 5
+
 
 
             if 'crc' in kw:
