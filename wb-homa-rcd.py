@@ -351,38 +351,41 @@ class MQTTHandler(object):
 
 
     def on_mqtt_message(self, mosq, obj, msg):
-        #~ print "on_mqtt_message " , msg.topic
-        parts = msg.topic.split('/')
+        try:
+            #~ print "on_mqtt_message " , msg.topic
+            parts = msg.topic.split('/')
 
-        if mosquitto.topic_matches_sub('/devices/%s/meta/+' % self.mqtt_device_id, msg.topic):
-            name = parts[4]
-            self.on_config_parameter_received(name, msg.payload)
-
-
-
-
-        elif msg.topic == self.random_topic:
-            self.on_initial_retained_received()
-        elif mosquitto.topic_matches_sub('/devices/+/controls/+/on' , msg.topic):
-
-            device_id = parts[2]
-            control = parts[4]
+            if mosquitto.topic_matches_sub('/devices/%s/meta/+' % self.mqtt_device_id, msg.topic):
+                name = parts[4]
+                self.on_config_parameter_received(name, msg.payload)
 
 
 
 
-            for device in self.devices:
-                if device.device_id == device_id:
-                    ret = device.update_control(control, msg.payload)
-                    if ret is not None:
-                        self.client.publish("/devices/%s/controls/%s" % (device_id, control), ret, 0, True)
+            elif msg.topic == self.random_topic:
+                self.on_initial_retained_received()
+            elif mosquitto.topic_matches_sub('/devices/+/controls/+/on' , msg.topic):
+
+                device_id = parts[2]
+                control = parts[4]
 
 
-                    break
-            else:
-                print "unknown device id ", device_id
 
 
+                for device in self.devices:
+                    if device.device_id == device_id:
+                        ret = device.update_control(control, msg.payload)
+                        if ret is not None:
+                            self.client.publish("/devices/%s/controls/%s" % (device_id, control), ret, 0, True)
+
+
+                        break
+                else:
+                    print "unknown device id ", device_id
+
+        except:
+            import traceback
+            traceback.print_exc()
 
 
 
