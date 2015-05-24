@@ -7,7 +7,7 @@ import utils
 
 
 to_bytes = lambda s: [ord(x) for x in binascii.unhexlify(s)]
-
+to_str = lambda s:  binascii.hexlify("".join(chr(x) for x in s))
 
 class ProtocolTestCase(unittest.TestCase):
     def setUp(self):
@@ -25,6 +25,26 @@ class ProtocolTestCase(unittest.TestCase):
         expected_vars = dict(kv_str.split('=', 1) for kv_str in expected_str.split())
         for k, v in expected_vars.iteritems():
             self.assertEqual(ans.get(k), v, "expected %s=%s, got %s" %(k, v, ans.get(k)))
+
+
+    def check_encode(self, var, expected_bitstream):
+        ans = self.handler.tryEncode(var)
+        self.assertIsNotNone(ans)
+
+        if isinstance(expected_bitstream, str):
+            expected_bitstream = to_bytes(expected_bitstream)
+
+        self.assertEqual(ans, expected_bitstream)
+
+    def check_encode_decode(self, var_encode, expected_str):
+        ans = self.handler.tryEncode(var_encode)
+        self.assertIsNotNone(ans)
+
+
+        self.check_decode(to_str(ans), expected_str)
+
+
+
 
 class TestNoolite(ProtocolTestCase):
     HandlerClass = noolite.NooliteProtocolHandler
@@ -47,12 +67,19 @@ class TestNoolite(ProtocolTestCase):
 
 
 
+
+
+
     def test_rgb(self):
         self.check_decode('aaaaaaaaaaaaaaa8596a5aa9a9aa59aaaaa6955669a5aaaaa6a0b2d4b5535354b355554d2aacd34b55554d4000000000000000000000200fffffffff',
                           'addr=25f9 cmd=6 flip=1 fmt=3')
-#~
+
         self.check_decode('34b55532b41a5a96aa6a6a966aaaa9a5559a696aaa65680000000000000000000000000bffffffffffffffffffffffffffffffffffffffffffffffff',
                           'addr=25f9 cmd=6 flip=0 fmt=3')
+
+
+        self.check_encode_decode( { 'addr': '25f9', 'cmd': '6', 'flip': '0', 'args': '11;22;33'},
+                                 'addr=25f9 cmd=6 flip=0 fmt=3 r=11 g=22 b=33')
 
     def test_sw_mode(self):
         self.check_decode('aaaaaaaaaaaaaaa859a6a5955669aa6aa56950b34d4b2aacd354d54ad2a0000000000000000000001007e3feffc87ffffffffff007c0ffffffffffff',
@@ -61,6 +88,11 @@ class TestNoolite(ProtocolTestCase):
         self.check_decode('aaaaaaaaaaaaaaa869a6a5955669aa6aaa59a0d34d4b2aacd354d554b340000000000000000000000003c07ffffffffffffffffffffffa3ff80fffff',
                           'addr=25fb cmd=18 flip=0 fmt=4')
 
+
+        self.check_encode_decode( { 'addr': '25fb', 'cmd': '18', 'flip': '0'},
+                                 'addr=25fb cmd=18 flip=0 fmt=4')
+
+
     def test_on_ch(self):
         self.check_decode('aaaaaaaaaaaaaaa859aa555669aaaaaa6960b354aaacd3555554d2c0000000000000000000000017fffffffe3fff87f0fffffffffffffffff8ffffff',
                           'fmt=0    cmd=2   flip=1  addr=25fc')
@@ -68,6 +100,8 @@ class TestNoolite(ProtocolTestCase):
         self.check_decode('aaaaaaaaaaaaaaa869aa555669aaaaaa9560d354aaacd35555552ac0000000000000000000000013fffffffffff3a73ffcffffffffffffffffffff0f',
                           'fmt=0    cmd=2   flip=0  addr=25fc')
 
+        self.check_encode_decode( { 'addr': '25fc', 'cmd': '2', 'flip': '0'},
+                                 'addr=25fc cmd=2 flip=0 fmt=0')
 
 
 
@@ -77,6 +111,10 @@ class TestNoolite(ProtocolTestCase):
                           'fmt=1    cmd=6   flip=1  addr=25fd')
         self.check_decode('aaaaaaaaaaaaaaaaa869665696555669a6aaaaa690d2ccad2caaacd34d55554d20000000000000000000000087ffffffffe07fffffffffffffffffff',
                           'fmt=1    cmd=6   flip=0  addr=25fd')
+
+        self.check_encode_decode( { 'addr': '25fd', 'cmd': '6', 'flip': '0', 'arg' : '100' },
+                                 'addr=25fd cmd=6 flip=0 fmt=1 level=100')
+
 
 
     def test_noise_at_the_end(self):
@@ -98,10 +136,25 @@ class TestNoolite(ProtocolTestCase):
         self.check_decode('aaaaaaaaaaaaaaa15a5a96aa99aaa6a699aa959642b4b52d5533554d4d33552b2c85696a5aaa66aa9a9a66aa5659000000000000000000ffbfffffff',
                            'addr=2205 cmd=25 flip=1 fmt=5 timeout=15')
 
+
+
+        self.check_encode_decode( { 'addr': '2205', 'cmd': '25', 'flip': '1', 'arg' : '15' },
+                                 'addr=2205 cmd=25 flip=1 fmt=5 timeout=75')
+
+
+
     def test_cmd_24(self):
         """Command_Shadow_Set_Bright"""
         self.check_decode('aaaaaaaaaaaaaaa85a96aa69666aa9a9a66aaa5960b52d54d2ccd553534cd554b2c16a5aa9a599aaa6a699aaa9658000000000000000000000000000',
                           'addr=2205 cmd=24 flip=1 fmt=5 level=100')
+
+
+        self.check_encode( { 'addr': '2205', 'cmd': '24', 'flip': '1', 'arg' : '100' },
+        'aaaaaaaaaaaaaaaaaaaa85a96aa69666aa9a9a66aaa5960b52d54d2ccd553534cd554b2c')
+
+
+        self.check_encode_decode( { 'addr': '2205', 'cmd': '24', 'flip': '1',  'arg' : '100' },
+                                 'addr=2205 cmd=24 flip=1 fmt=5 level=100')
 
 
 class TestOregonV2(ProtocolTestCase):

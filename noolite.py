@@ -101,7 +101,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
         else:
             data = chr(flip_bit << 7) + chr(cmd)
 
-        #~ if fmt == 1:
         for arg in args:
             data += chr(arg)
 
@@ -245,8 +244,15 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                 kw['humidity'] =str(rel_humidity)
                 kw['lowbat'] = str(lowbat)
 
-            elif cmd == 6:
-                kw['level'] = str(args[0])
+            elif cmd == NooliteCommands.SetLevel:
+                if len(args) == 1:
+                    kw['level'] = str(args[0])
+                elif len(args) == 4:
+                    kw['r'] = str(args[0])
+                    kw['g'] = str(args[1])
+                    kw['b'] = str(args[2])
+
+
             elif cmd == NooliteCommands.ShadowSetBright:
                 kw['level'] = str(args[0])
             elif cmd == NooliteCommands.TemporaryOn :
@@ -255,11 +261,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                     quanta += args[1] * 256
 
                 kw['timeout'] = str(quanta * 5)
-
-
-
-            #~ kw['crc'] = hex(crc)[2:]
-            #~ kw['crc_e'] = hex(crc_expected)[2:]
 
 
             return kw
@@ -301,8 +302,6 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             elif cmd == NooliteCommands.ShadowSetBright:
                 args = [ int(kw['arg']) ]
                 fmt = 5
-
-
             elif cmd == NooliteCommands.TemporaryOn:
                 timeout = int(kw['arg'])
                 if (timeout < 0) or (timeout > 65535):
@@ -315,6 +314,10 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
                     args = [timeout]
                     fmt = 5
 
+            elif cmd in (NooliteCommands.SwitchMode,NooliteCommands.SwitchColor):
+                fmt = 4
+
+
 
 
             if 'crc' in kw:
@@ -326,24 +329,29 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
             addr_lo = addr & 0x00ff
 
             args_data = ''
-            if fmt == 1:
+            cmd_data = ''
+
+            if fmt in (0, 1, 3):
+                cmd_data = bin(cmd)[2:].zfill(4)[::-1]
+            else:
+                cmd_data = bin(cmd)[2:].zfill(8)[::-1]
+
+
+            if fmt in (1, 5):
                 args_data = bin(args[0])[2:].zfill(8)[::-1]
-            elif fmt == 4:
-                args_data = bin(args[0])[2:].zfill(4)[::-1],
             elif fmt == 3:
                 assert len(args) == 4
                 args_data = "".join(bin(args[i])[2:].zfill(8)[::-1] for i in xrange(4))
 
             packet = "".join(( '1',
                                 str(self.flip),
-                                bin(cmd)[2:].zfill(4)[::-1],
+                                cmd_data,
                                 args_data,
                                 bin(addr_lo)[2:].zfill(8)[::-1],
                                 bin(addr_hi)[2:].zfill(8)[::-1],
                                 bin(fmt)[2:].zfill(8)[::-1],
                                 bin(crc)[2:].zfill(8)[::-1] ))
 
-        #~ print "packet: ", packet
 
 
 
@@ -365,6 +373,13 @@ class NooliteProtocolHandler(protocols.BaseRCProtocolHandler):
 
 
         return data
+
+
+
+
+
+
+
 
 #ch:2 r:1 g:1 b:1        110110          10000000 10000000 10000000 00000000 10011111 10100100 11000000 11001011  fmt=3
 #ch:2 r:1 g:1 b:2        100110          10000000 10000000 01000000 00000000 10011111 10100100 11000000 11101101  fmt=3
