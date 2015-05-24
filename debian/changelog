@@ -1,3 +1,15 @@
+wb-homa-ism-radio (1.17) stable; urgency=medium
+
+  * fix noolite commands 23-25, some noolite encoding and tests improvements
+
+ -- Evgeny Boger <boger@contactless.ru>  Mon, 25 May 2015 02:34:49 +0300
+
+wb-homa-ism-radio (1.16) stable; urgency=medium
+
+  * add support for new noolite commands 23-25
+
+ -- Evgeny Boger <boger@contactless.ru>  Mon, 11 May 2015 18:01:51 +0300
+
 wb-homa-ism-radio (1.15) stable; urgency=medium
 
   * minor noolite refactoring
