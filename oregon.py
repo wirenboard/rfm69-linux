@@ -162,7 +162,6 @@ class OregonV2V3ProtocolDecoder(object):
         raw = packet
         kw = {}
 
-#        print "decode_packet: ", packet
         if  (len(packet) < 56) or (len(packet) > 89):
             print "!invalid packet length: ", len(packet)
             #return
@@ -170,20 +169,13 @@ class OregonV2V3ProtocolDecoder(object):
 
         nibbles = [int(utils.invert(s[::-1]),2) for s in utils.batch_gen(packet,4)]
 
-        #~ print nibbles, len(nibbles)
-        #~ print [hex(x)[2:] for x in nibbles]
-        #~ print [hex(x)[2:] for x in utils.get_bytes(packet)]
-        #~ print "".join([hex(x)[2:] for x in nibbles])
-
         if len(nibbles) < 14:
-            # packet too short -> it's fatal
-#            print "!invalid nibbles length: ", len(nibbles)
+            #~ logging.info("!invalid nibbles length: %s" % len(nibbles))
             return
 
         if len(nibbles) > 24:
             pass
 #            print "!invalid nibbles length: ", len(nibbles)
-            #return
         else:
             pass
 #        	print "nibbles len=", len(nibbles)
@@ -222,16 +214,7 @@ class OregonV2V3ProtocolDecoder(object):
 #             print "checksum matched: ", hex(checksum)[2:]
             pass
 
-        #~ crc_buffer = [((h<<4) + l)  for (l, h) in utils.batch_gen(nibbles[:-4], 2)]
-        #~ expected_crc = oregon_crc8(crc_buffer)
-        #~ crc = nibbles[-1] * 16 + nibbles[-2]
-        #~ print [hex(x) for x in crc_buffer]#~
-        #~ print hex(expected_crc), hex(crc)
-
-        #
-        #!!! if sensor_type == 1d20 or 1d30 => only 3 channels (bitcoded) change channel 4 to channel 3
-        #
-
+        #TODO: !!! if sensor_type == 1d20 or 1d30 => only 3 channels (bitcoded) change channel 4 to channel 3
 
         kw['raw'] = raw
         kw['channel'] = str(channel)
@@ -264,7 +247,6 @@ class OregonV2V3ProtocolDecoder(object):
         return kw
 
 
-
 class OregonV2ProtocolHandler(OregonV2V3ProtocolDecoder, protocols.BaseRCProtocolHandler):
     name = "oregon"
 
@@ -274,13 +256,9 @@ class OregonV2ProtocolHandler(OregonV2V3ProtocolDecoder, protocols.BaseRCProtoco
 #    	print "Oregon2 decoding:", data
 
         bitstream = utils.get_bits(data)
-        #~ print "before strip tail", bitstream
-        #~ bitstream = utils.strip_tail(bitstream, ignore_bits=3)
         bitstream = utils.strip_to_pause(bitstream, zero_bits = 8 * 3)
 
-        #~ print "aft strip tail", bitstream
         slips, bitsream_dec_1 = utils.manchester_decode_ext(bitstream)
-        #~ print bitsream_dec_1
 
         # remove trailing '1's
         while bitsream_dec_1.startswith('1'):
@@ -288,9 +266,9 @@ class OregonV2ProtocolHandler(OregonV2V3ProtocolDecoder, protocols.BaseRCProtoco
 
 
         slips, packet = utils.manchester_decode_ext(bitsream_dec_1)
-        #~ print slips
         if len(slips) > 4:
             return
+
         # remove trailing '1's
         while packet.startswith('1'):
             packet = packet[1:]
@@ -306,15 +284,10 @@ class OregonV3ProtocolHandler(OregonV2V3ProtocolDecoder, protocols.BaseRCProtoco
     def tryDecode(self, data):
 #    	print "Oregon3 decoding:", data
         bitstream = utils.get_bits(data)
-        #~ print "before strip tail", bitstream
+
         bitstream = utils.strip_tail(bitstream, ignore_bits=3)
         bitstream = utils.strip_preamble(bitstream)
 
         slips, packet = utils.manchester_decode_ext(bitstream)
-#        print "slips, packet:", slips, packet
 
         return self.decode_packet(packet)
-
-
-
-
