@@ -52,7 +52,7 @@ do_start()
 	start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
 	start-stop-daemon --start --quiet --make-pidfile --background --pidfile $PIDFILE --exec $DAEMON --name $NAME -- \
-		$DAEMON_ARGS ${WB_RFM_SPI_MINOR} ${WB_GPIO_RFM_IRQ}  \
+		$DAEMON_ARGS ${WB_RFM_SPI_MINOR} ${WB_GPIO_RFM_IRQ} ${WB_RFM_SPI_MAJOR} \
 		|| return 2
 	# Add code here, if necessary, that waits for the process to be ready
 	# to handle requests from services started subsequently which depend

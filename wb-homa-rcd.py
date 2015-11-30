@@ -399,8 +399,12 @@ if __name__ == "__main__":
     radio_sender_thread.daemon = True
     radio_sender_thread.start()
 
-
     if len(sys.argv) > 2:
+        if len(sys.argv) > 3:
+            spi_major = int(sys.argv[3])
+        else:
+            spi_major = 0
+
         spi_minor = int(sys.argv[1])
         irq_gpio = int(sys.argv[2])
         # 7 55
@@ -408,7 +412,7 @@ if __name__ == "__main__":
         spi_minor = 5
         irq_gpio = 36
 
-    radio = rfm69.RFM69(spi_minor=spi_minor,irq_gpio=irq_gpio)
+    radio = rfm69.RFM69(spi_major=spi_major, spi_minor=spi_minor,irq_gpio=irq_gpio)
 
     radio.setPowerLevel(31)
     #~ radio.setHighPower(True)
