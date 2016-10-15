@@ -3,8 +3,8 @@
 # Provides:          wb-homa-rcd
 # Default-Start:     2 3 4 5
 # Default-Stop:      0 1 6
-# Required-Start:
-# Required-Stop:
+# Required-Start: $local_fs mosquitto 
+# Required-Stop: $local_fs
 # Short-Description: MQTT driver for WB HomA for RFM69 ISM radio
 # Description:       MQTT driver for WB HomA for RFM69 ISM radio
 ### END INIT INFO
