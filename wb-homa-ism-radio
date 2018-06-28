@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ### BEGIN INIT INFO
 # Provides:          wb-homa-rcd
 # Default-Start:     2 3 4 5

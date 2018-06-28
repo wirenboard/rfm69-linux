@@ -1,3 +1,9 @@
+wb-homa-ism-radio (1.17.2) stable; urgency=medium
+
+  * Use bash as init shell interpreter to support newer wb_env.sh.
+
+ -- Nikita Maslov <n.maslov@contactless.ru>  Thu, 28 Jun 2018 14:37:43 +0300
+
 wb-homa-ism-radio (1.17.1) stable; urgency=medium
 
   * makes wb-homa-rcd accept spi major number to make it work on WB5
