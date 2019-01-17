@@ -51,14 +51,11 @@ do_start()
 	wb_source of
 	wb_source wb_env_of
 
-	of_node_exists "${WB_OF_ROOT}/radio" && {
-
+	of_node_exists "${WB_OF_ROOT}/radio/spi-device" && {
 		for spidev in /sys/bus/spi/devices/*; do
 			if [ -f "$spidev/of_node/phandle" ]; then
 				phandle=$(bin2ulong < "$spidev/of_node/phandle")
-				ph_dtb=$(of_get_prop_ulong ${WB_OF_ROOT}/radio spi-device-phandle)
-				if [ "$phandle" = "$ph_dtb" ]
-				then
+				if [ "$phandle" = "$(of_get_prop_ulong ${WB_OF_ROOT}/radio spi-device)" ]; then
 					WB_RFM_SPI_MAJOR=$(($(echo $spidev | sed 's/.*\/spi//' | sed 's/\..*//')-1))
 					WB_RFM_SPI_MINOR=$(echo $spidev | sed 's/.*\/spi//' | sed 's/.*\.//')
 				fi 
@@ -66,10 +63,7 @@ do_start()
 		done
 
 		WB_GPIO_RFM_IRQ=$(of_gpio_to_num $(of_get_prop_gpio /wirenboard/radio irq-gpios))
-		echo ""
-		echo "new env: major: $WB_RFM_SPI_MAJOR  minor: $WB_RFM_SPI_MINOR  irq: $WB_GPIO_RFM_IRQ"
 	}
-
 
 	start-stop-daemon --start --quiet --make-pidfile --pidfile $PIDFILE --exec $DAEMON --test > /dev/null \
 		|| return 1
