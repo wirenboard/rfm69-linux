@@ -1,3 +1,9 @@
+wb-homa-ism-radio (1.17.3) stable; urgency=medium
+
+  * add read irq gpio and spi device from dtb
+
+ -- Nikita Kulikov <n.kulikov@wirenboard.ru>  Tue, 15 Jan 2019 17:44:47 +0300
+
 wb-homa-ism-radio (1.17.2) stable; urgency=medium
 
   * Use bash as init shell interpreter to support newer wb_env.sh.
